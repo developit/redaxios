@@ -1,0 +1,73 @@
+{
+  "name": "axios-shim",
+  "version": "0.1.0",
+  "description": "The API from Axios, as a tiny abstraction over Fetch.",
+  "source": "src/index.mjs",
+  "main": "dist/axios-shim.js",
+  "umd:main": "dist/axios-shim.js",
+  "module": "dist/axios-shim.mjs",
+  "scripts": {
+    "build": "microbundle",
+    "test": "eslint \"{src,test}/**/*.{mjs,js}\" && jest"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "jest": {
+    "verbose": true,
+    "testURL": "http://localhost/",
+    "testMatch": [
+      "**/__tests__/**/*.?(m)js?(x)",
+      "**/?(*.)(spec|test).?(m)js?(x)"
+    ],
+    "moduleFileExtensions": [
+      "mjs",
+      "js",
+      "json"
+    ],
+    "transform": {
+      "^.+\\.m?jsx?$": "babel-jest"
+    },
+    "watchPathIgnorePatterns": [
+      "<rootDir>/node_modules/",
+      "<rootDir>/test/fixtures/.*?/dist/"
+    ]
+  },
+  "babel": {
+    "plugins": [
+      "transform-es2015-modules-commonjs"
+    ]
+  },
+  "eslintConfig": {
+    "extends": "google",
+    "parserOptions": {
+      "ecmaVersion": "8",
+      "sourceType": "module"
+    },
+    "rules": {
+      "guard-for-in": 0,
+      "require-jsdoc": 0,
+      "max-len": [
+        1,
+        120
+      ]
+    }
+  },
+  "repository": "GoogleChromeLabs/axios-shim",
+  "keywords": [
+    "axios",
+    "fetch"
+  ],
+  "author": "Jason Miller <developit@google.com>",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/GoogleChromeLabs/axios-shim",
+  "devDependencies": {
+    "babel-jest": "^23.4.2",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.26.2",
+    "eslint": "^5.2.0",
+    "eslint-config-google": "^0.9.1",
+    "jest": "^23.4.2",
+    "microbundle": "^0.6.0"
+  }
+}
