@@ -40,16 +40,12 @@ export default (function create(defaults) {
     }
     if (overrides && typeof overrides == 'object') {
       const out = {};
-      // const keys = {};
       if (opts) {
         for (let i in opts) {
-          // keys[i.toLowerCase()] = i;
-          // out[i] = opts[i];
           out[i.toLowerCase()] = opts[i];
         }
       }
       for (let i in overrides) {
-        // let key = keys[i.toLowerCase()] || i;
         let key = lowerCase ? i.toLowerCase() : i;
         if (key === 'headers') lowerCase = true;
         if (i in out) {
@@ -62,39 +58,6 @@ export default (function create(defaults) {
     }
     return overrides;
   }
-
-  /*
-  function extend(target, source, lowerCase) {
-    if (source) for (let i in source) {
-      let prop = lowerCase ? i.toLowerCase() : i;
-      target[prop] = source[i];
-    }
-    return target;
-  }
-  */
-
-  /*
-  function transform(stack, data, headers) {
-    for (let i=0, r; i<stack && stack.length || 0; i++) {
-      r = stack[i](data, headers);
-      if (r!==undefined) {
-        data = r;
-      }
-    }
-    return data;
-  }
-  */
-
-  // function qs(params) {
-  //   let out = '';
-  //   for (let i in params) {
-  //     if (out) out += '&';
-  //     out += encodeURIComponent(i);
-  //     out += '=';
-  //     out += encodeURIComponent(params[i]);
-  //   }
-  //   return out;
-  // }
 
   function isOk(status) {
     return status/100|0 === 2;
@@ -110,33 +73,6 @@ export default (function create(defaults) {
       data = undefined;
     }
     options = deepMerge(defaults, options) || {};
-
-    /*
-    config = config || {};
-    const headers = assign(
-      assign({}, defaults.headers, true),
-      config.headers,
-      true
-    );
-    const params = assign(
-      assign({}, defaults.params, false),
-      config.params,
-      false
-    );
-    */
-
-    /*
-    const headers = {};
-    if (defaults.headers) for (let i in defaults.headers) {
-      headers[i.toLowerCase()] = defaults.headers[i];
-    }
-    if (config.headers) for (let i in config.headers) {
-      headers[i.toLowerCase()] = config.headers[i];
-    }
-    */
-
-    // data = transform(defaults.transformRequest, data, headers);
-    // data = transform(config.transformRequest, data, headers);
 
     if (options.transformRequest) {
       for (let i = 0; i < options.transformRequest.length; i++) {
