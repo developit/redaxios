@@ -64,6 +64,14 @@ export default (function create(defaults) {
 	axios.put = createMethod('put', true);
 	axios.patch = createMethod('patch', true);
 
+	// hmmm.
+	axios.all = Promise.all;
+	axios.spread = function(fn) {
+		return function (results) {
+			return fn.apply(this, results);
+		};
+	};
+
 	function deepMerge(opts, overrides, lowerCase) {
 		if (Array.isArray(opts)) {
 			return opts.concat(overrides);
