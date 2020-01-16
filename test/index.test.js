@@ -11,10 +11,66 @@
  * limitations under the License.
  */
 
-import axios from '../src/index.mjs';
+// import sinon from 'sinon';
+import axios from '../src/index.js';
+import textExample from 'file-loader!./fixtures/example.txt';
+import jsonExample from 'file-loader!./fixtures/example.json.txt';
 
-describe('axios-shim', () => {
-  test('initial render', () => {
-    expect(axios).toBeInstanceOf(Function);
-  });
+describe('redaxios', () => {
+	it('smoke test', () => {
+		expect(axios).toBeInstanceOf(Function);
+	});
+
+	it('should reject promises for 404', async () => {
+		const req = axios('/foo.txt');
+		expect(req).toBeInstanceOf(Promise);
+		const spy = jasmine.createSpy();
+		await req.catch(spy);
+		expect(spy).toHaveBeenCalledTimes(1);
+		expect(spy).toHaveBeenCalledWith(jasmine.objectContaining({ status: 404 }));
+	});
+
+	it('should request a file', async () => {
+		const req = axios(textExample);
+		expect(req).toBeInstanceOf(Promise);
+		const res = await req;
+		expect(res).toBeInstanceOf(Object);
+		expect(res.status).toEqual(200);
+		expect(res.data).toEqual('some example content');
+	});
+
+	it('should request JSON', async () => {
+		const req = axios.get(jsonExample, {
+			responseType: 'json'
+		});
+		expect(req).toBeInstanceOf(Promise);
+		const res = await req;
+		expect(res).toBeInstanceOf(Object);
+		expect(res.status).toEqual(200);
+		expect(res.data).toEqual({ hello: 'world' });
+	});
+
+	it('should issue POST requests', async () => {
+		const oldFetch = window.fetch;
+		try {
+			window.fetch = jasmine.createSpy('fetch').and.returnValue(Promise.resolve({ status: 200, text: () => Promise.resolve('yep') }));
+			const req = axios.post('/foo', {
+				hello: 'world'
+			});
+			expect(window.fetch).toHaveBeenCalledTimes(1);
+			expect(window.fetch).toHaveBeenCalledWith('/foo', jasmine.objectContaining({
+				method: 'post',
+				headers: {
+					'content-type': 'application/json'
+				},
+				body: '{"hello":"world"}'
+			}));
+			const res = await req;
+			expect(res.status).toEqual(200);
+			expect(res.data).toEqual('yep');
+		}
+		finally {
+			window.fetch = oldFetch;
+		}
+	});
 });
