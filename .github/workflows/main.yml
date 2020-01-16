@@ -7,15 +7,11 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    strategy:
-     matrix:
-       node: [12.x, 13.x]
-
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-node@v1
       with:
-        node-version: ${{ matrix.node }}
+        node-version: 12
     - name: npm install, build, and test
       run: |
         npm install
