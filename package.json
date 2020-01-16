@@ -2,10 +2,10 @@
   "name": "redaxios",
   "version": "0.1.0",
   "description": "The API from Axios, as a tiny abstraction over Fetch.",
-  "source": "src/index.mjs",
+  "source": "src/index.js",
   "main": "dist/redaxios.js",
-  "umd:main": "dist/redaxios.js",
-  "module": "dist/redaxios.mjs",
+  "umd:main": "dist/redaxios.umd.js",
+  "module": "dist/redaxios.module.js",
   "scripts": {
     "build": "microbundle",
     "test": "eslint \"{src,test}/**/*.{mjs,js}\" && karmatic"
