@@ -64,7 +64,6 @@ export default (function create(defaults) {
 	axios.put = createMethod('put', true);
 	axios.patch = createMethod('patch', true);
 
-	// hmmm.
 	axios.all = Promise.all;
 	axios.spread = function(fn) {
 		return function (results) {
