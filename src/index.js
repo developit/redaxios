@@ -12,10 +12,12 @@
  */
 
 /**
+ * @public
  * @typedef Options
  * @property {string} [url] the URL to request
  * @property {string} [method="get"] HTTP method, case-insensitive
  * @property {Headers} [headers] Request headers
+ * @property {FormData|string|object} [body] a body, optionally encoded, to send
  * @property {'text'|'json'|'stream'|'blob'|'arrayBuffer'|'formData'|'stream'} [responseType="text"] An encoding to use for the response
  * @property {string} [auth] Authorization header value to send with the request
  * @property {string} [xsrfCookieName] Pass an Cross-site Request Forgery prevention cookie value as a header defined by `xsrfHeaderName`
@@ -25,47 +27,71 @@
  */
 
 /**
+ * @public
  * @typedef Headers
  * @type {{[name: string]: string}}
  */
 
 /**
+ * @public
  * @typedef Response
- * @property {Options} config the resolved request configuration
- * @property {FormData|string|object} [body] a body, optionally encoded, to send
+ * @property {Options} config the request configuration
+ * @property {any} data the decoded response body
  */
 
+/** */
 export default (function create(defaults) {
 	defaults = defaults || {};
 
 	/**
 	 * Creates a request factory bound to the given HTTP method.
+	 * @private
 	 * @param {string} method
-	 * @param {boolean} allowBody
-	 * @returns {(url: string, config?: Options, body?) => Promise<Response>}
+	 * @returns {(url: string, config?: Options) => Promise<Response>}
 	 */
-	function createMethod(method, allowBody) {
-		return (url, config, alt) => {
-			let data;
-			if (allowBody) {
-				data = config;
-				config = alt;
-			}
-			config = Object.assign({ method }, config);
-			return axios(url, data, config);
-		};
+	function createBodylessMethod(method) {
+		return (url, config) => redaxios(url, Object.assign({ method }, config));
 	}
 
-	axios.request = axios;
-	axios.get = createMethod('get', false);
-	axios.delete = createMethod('delete', false);
-	axios.options = createMethod('options', false);
-	axios.post = createMethod('post', true);
-	axios.put = createMethod('put', true);
-	axios.patch = createMethod('patch', true);
+	/**
+	 * Creates a request factory bound to the given HTTP method.
+	 * @private
+	 * @param {string} method
+	 * @returns {(url: string, body?: any, config?: Options) => Promise<Response>}
+	 */
+	function createBodyMethod(method) {
+		return (url, data, config) => redaxios(url, Object.assign({ method, data }, config));
+	}
 
-	axios.all = Promise.all;
-	axios.spread = function(fn) {
+	/**
+	 * @public
+	 * @type {((config?: Options) => Promise<Response>) | ((url: string, config?: Options) => Promise<Response>)}
+	 */
+	redaxios.request = redaxios;
+
+	/** @public */
+	redaxios.get = createBodylessMethod('get');
+
+	/** @public */
+	redaxios.delete = createBodylessMethod('delete');
+
+	/** @public */
+	redaxios.options = createBodylessMethod('options');
+
+	/** @public */
+	redaxios.post = createBodyMethod('post');
+
+	/** @public */
+	redaxios.put = createBodyMethod('put');
+
+	/** @public */
+	redaxios.patch = createBodyMethod('patch');
+
+	/** @public */
+	redaxios.all = Promise.all;
+
+	/** @public */
+	redaxios.spread = function(fn) {
 		return function (results) {
 			return fn.apply(this, results);
 		};
@@ -86,12 +112,7 @@ export default (function create(defaults) {
 			for (i in overrides) {
 				let key = lowerCase ? i.toLowerCase() : i;
 				if (key === 'headers') lowerCase = true;
-				if (i in out) {
-					out[key] = deepMerge(out[key], overrides[i], lowerCase);
-				}
-				else {
-					out[key] = overrides[i];
-				}
+				out[key] = i in out ? deepMerge(out[key], overrides[i], lowerCase) : overrides[i];
 			}
 			return out;
 		}
@@ -104,22 +125,18 @@ export default (function create(defaults) {
 
 	/**
 	 * Issues a request.
-	 * @param {string} url the URL to fetch
-	 * @param {any} [data] request body to send
-	 * @param {Options} [config] configuration for the request
+	 * @public
+	 * @param {string} [url]
+	 * @param {Options} [config]
 	 * @returns {Promise<Response>}
 	 */
-	function axios(url, data, config) {
-		let options = config;
+	function redaxios(url, config) {
 		if (typeof url !== 'string') {
-			options = url;
-			url = options.url;
+			config = url;
+			url = config.url;
 		}
-		else if (config === undefined) {
-			options = data;
-			data = undefined;
-		}
-		options = deepMerge(defaults, options) || {};
+		const options = deepMerge(defaults, config || {});
+		let data = options.data;
 
 		if (options.transformRequest) {
 			for (let i = 0; i < options.transformRequest.length; i++) {
@@ -151,9 +168,10 @@ export default (function create(defaults) {
 			customHeaders.Authorization = options.auth;
 		}
 
-		const response = {
-			config
-		};
+		/** @type {Response} */
+		const response = {};
+		response.config = config;
+
 		return fetch(url, {
 			method: options.method,
 			body: data,
@@ -176,7 +194,9 @@ export default (function create(defaults) {
 		});
 	}
 
-	axios.CancelToken = self.AbortController || Object;
+	redaxios.CancelToken = self.AbortController || Object;
 
-	return axios;
+	redaxios.create = create;
+
+	return redaxios;
 })();

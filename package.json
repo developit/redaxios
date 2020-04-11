@@ -8,7 +8,7 @@
   "module": "dist/redaxios.module.js",
   "scripts": {
     "build": "microbundle",
-    "test": "eslint \"{src,test}/**/*.{mjs,js}\" && karmatic"
+    "test": "eslint src test && karmatic"
   },
   "files": [
     "dist",

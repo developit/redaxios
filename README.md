@@ -10,3 +10,12 @@ Yes! Axios is an excellent module. In fact, Redaxios exists so that you can use 
 
 [axios]: https://github.com/axios/axios
 [fetch]: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
+
+### Usage
+
+```js
+import axios from 'redaxios';
+// use as you would normally
+```
+
+Refer to the [Axios Documentation](https://github.com/axios/axios#axios-api).
