@@ -1,6 +1,6 @@
 {
   "name": "redaxios",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "The API from Axios, as a tiny abstraction over Fetch.",
   "source": "src/index.js",
   "main": "dist/redaxios.js",
@@ -8,7 +8,8 @@
   "module": "dist/redaxios.module.js",
   "scripts": {
     "build": "microbundle",
-    "test": "eslint src test && karmatic"
+    "test": "eslint src test && karmatic",
+    "release": "npm t && git commit -am \"$npm_package_version\" && git tag $npm_package_version && git push && git push --tags && npm publish"
   },
   "files": [
     "dist",
