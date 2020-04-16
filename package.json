@@ -7,7 +7,8 @@
   "umd:main": "dist/redaxios.umd.js",
   "module": "dist/redaxios.module.js",
   "scripts": {
-    "build": "microbundle",
+    "build": "microbundle -f es,cjs,umd",
+    "build:lite": "microbundle --name index src/lite.js -o lite -f es --define @deepMerge=Object.assign,options.xsrfCookieName=0",
     "test": "eslint src test && karmatic"
   },
   "files": [
@@ -31,7 +32,7 @@
     "file-loader": "^5.0.2",
     "jest": "^24.9.0",
     "karmatic": "^1.4.0",
-    "microbundle": "^0.11.0",
+    "microbundle": "^0.12.0-next.8",
     "sinon": "^8.0.4",
     "webpack": "^4.41.5"
   }
