@@ -22,7 +22,7 @@
     "axios",
     "fetch"
   ],
-  "author": "Jason Miller <developit@google.com>",
+  "author": "Jason Miller <jason@developit.ca>",
   "license": "Apache-2.0",
   "homepage": "https://github.com/developit/redaxios",
   "devDependencies": {
