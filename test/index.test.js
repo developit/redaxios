@@ -53,7 +53,7 @@ describe('redaxios', () => {
 	it('should issue POST requests', async () => {
 		const oldFetch = window.fetch;
 		try {
-			window.fetch = jasmine.createSpy('fetch').and.returnValue(Promise.resolve({ status: 200, text: () => Promise.resolve('yep') }));
+			window.fetch = jasmine.createSpy('fetch').and.returnValue(Promise.resolve({ ok: true, status: 200, text: () => Promise.resolve('yep') }));
 			const req = axios.post('/foo', {
 				hello: 'world'
 			});

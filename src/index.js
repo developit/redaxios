@@ -119,10 +119,6 @@ export default (function create(defaults) {
 		return overrides;
 	}
 
-	function isOk(status) {
-		return (status/100|0) === 2;
-	}
-
 	/**
 	 * Issues a request.
 	 * @public
@@ -181,7 +177,7 @@ export default (function create(defaults) {
 			for (i in res) {
 				if (typeof res[i] != 'function') response[i] = res[i];
 			}
-			if (!(options.validateStatus || isOk)(res.status)) {
+			if (!(options.validateStatus ? options.validateStatus(res.status) : res.ok)) {
 				return Promise.reject(res);
 			}
 			const withData = options.responseType === 'stream'
