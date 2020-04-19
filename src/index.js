@@ -64,6 +64,22 @@ export default (function create(defaults) {
 	}
 
 	/**
+	 * Creates a new URL by combining the baseURL with the URL
+	 * only when the URL is not already an absolute URL.
+	 * @private
+	 * @param {string} baseURL The base URL
+	 * @returns {string} The combined full path
+	 */
+	function buildFullUrl(baseURL, url) {
+		const isAbsoluteURL = /^([a-z][a-z\d+\-.]*:)?\/\//i.test(url);
+		if (baseURL && !isAbsoluteURL) {
+			return `${baseURL.replace(/\/+$/, '')}/${url.replace(/^\/+/, '')}`;
+		}
+
+		return url;
+	}
+
+	/**
 	 * @public
 	 * @type {((config?: Options) => Promise<Response>) | ((url: string, config?: Options) => Promise<Response>)}
 	 */
@@ -162,6 +178,10 @@ export default (function create(defaults) {
 
 		if (options.auth) {
 			customHeaders.Authorization = options.auth;
+		}
+
+		if (options.baseURL) {
+			url = buildFullUrl(options.baseURL, url);
 		}
 
 		/** @type {Response} */
