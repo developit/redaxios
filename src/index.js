@@ -1,3 +1,5 @@
+import Interceptor from './interceptor';
+
 /**
  * Copyright 2018 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -91,10 +93,16 @@ export default (function create(defaults) {
 	redaxios.all = Promise.all;
 
 	/** @public */
-	redaxios.spread = function(fn) {
+	redaxios.spread = function (fn) {
 		return function (results) {
 			return fn.apply(this, results);
 		};
+	};
+
+	/** @public */
+	redaxios.interceptors = {
+		request: new Interceptor(),
+		response: new Interceptor()
 	};
 
 	function deepMerge(opts, overrides, lowerCase) {
@@ -131,7 +139,18 @@ export default (function create(defaults) {
 			config = url;
 			url = config.url;
 		}
-		const options = deepMerge(defaults, config || {});
+
+		// pre-request interception
+		let options = deepMerge(defaults, config || {});
+		if (redaxios.interceptors.request.handlers.length > 0) {
+			redaxios.interceptors.request.handlers.forEach(handler => {
+				if (handler !== null) {
+					const resultConfig = handler.done(config);
+					options = deepMerge(options, resultConfig || {});
+				}
+			});
+		}
+
 		let data = options.data;
 
 		if (options.transformRequest) {
@@ -154,7 +173,7 @@ export default (function create(defaults) {
 			let parts = document.cookie.split(/ *[;=] */);
 			for (let i = 0; i < parts.length; i += 2) {
 				if (parts[i] == options.xsrfCookieName) {
-					customHeaders[options.xsrfHeaderName] = decodeURIComponent(parts[i+1]);
+					customHeaders[options.xsrfHeaderName] = decodeURIComponent(parts[i + 1]);
 					break;
 				}
 			}
@@ -165,7 +184,7 @@ export default (function create(defaults) {
 		}
 
 		/** @type {Response} */
-		const response = {};
+		let response = {};
 		response.config = config;
 
 		return fetch(url, {
@@ -177,16 +196,53 @@ export default (function create(defaults) {
 			for (i in res) {
 				if (typeof res[i] != 'function') response[i] = res[i];
 			}
+
+			// response error interception
+			if (!(res.status >= 200 && res.status < 300)
+				&& redaxios.interceptors.response.handlers.length > 0) {
+				redaxios.interceptors.response.handlers.forEach(handler => {
+					if (handler && handler.error)
+						handler.error(res);
+				});
+			}
+
 			if (!(options.validateStatus ? options.validateStatus(res.status) : res.ok)) {
 				return Promise.reject(res);
 			}
 			const withData = options.responseType === 'stream'
 				? Promise.resolve(res.body)
 				: res[options.responseType || 'text']();
+
 			return withData.then((data) => {
-				response.data = data;
+				// post-response interception 200 status code
+				if (res.status >= 200 && res.status < 300
+					&& redaxios.interceptors.response.handlers.length > 0) {
+					response.data = data;
+					redaxios.interceptors.response.handlers.forEach(handler => {
+						if (handler !== null) {
+							const interceptedResponse = handler.done(response);
+
+							if (interceptedResponse)
+								response = interceptedResponse;
+						}
+					});
+				}
+				else {
+					response.data = data;
+				}
+				
 				return response;
 			});
+		}).catch(error => {
+			// request error interception
+			if (redaxios.interceptors.request.handlers.length > 0) {
+				redaxios.interceptors.request.handlers.forEach(handler => {
+					if (handler && handler.error)
+						handler.error(error);
+				});
+			}
+
+			throw error;
 		});
 	}
 
