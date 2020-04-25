@@ -131,60 +131,83 @@ export default (function create(defaults) {
 			config = url;
 			url = config.url;
 		}
-		const options = deepMerge(defaults, config || {});
-		let data = options.data;
-
-		if (options.transformRequest) {
-			for (let i = 0; i < options.transformRequest.length; i++) {
-				let r = options.transformRequest[i](data, options.headers);
+		const {
+			transformRequest,
+			headers,
+			xsrfCookieName,
+			auth,
+			method,
+			validateStatus,
+			responseType,
+			data: optionData,
+			xsrfHeaderName
+		} = deepMerge(defaults, config || {});
+		let body = optionData;
+		if (transformRequest) {
+			for (let i = 0; i < transformRequest.length; i++) {
+				let r = transformRequest[i](body, headers);
 				if (r !== undefined) {
-					data = r;
+					body = r;
 				}
 			}
 		}
 
-		const customHeaders = {};
+		let customHeaders = {};
 
-		if (data && typeof data === 'object') {
-			data = JSON.stringify(data);
-			customHeaders['Content-Type'] = 'application/json';
+		if (body && typeof body === 'object') {
+			body = JSON.stringify(body);
+			customHeaders = {
+				...customHeaders,
+				'Content-Type': 'application/json'
+			};
 		}
 
-		if (options.xsrfCookieName) {
+		if (xsrfCookieName) {
 			let parts = document.cookie.split(/ *[;=] */);
 			for (let i = 0; i < parts.length; i += 2) {
-				if (parts[i] == options.xsrfCookieName) {
-					customHeaders[options.xsrfHeaderName] = decodeURIComponent(parts[i+1]);
+				if (parts[i] == xsrfCookieName) {
+					customHeaders = {
+					  ...customHeaders,
+					  [xsrfHeaderName]: decodeURIComponent(parts[i + 1])
+					};
 					break;
 				}
 			}
 		}
 
-		if (options.auth) {
-			customHeaders.Authorization = options.auth;
+		if (auth) {
+			customHeaders = {
+				...customHeaders,
+				Authorization: auth
+			};
 		}
 
 		/** @type {Response} */
-		const response = {};
-		response.config = config;
+		let response = {
+			config
+		};
+		// response.config = config;
 
 		return fetch(url, {
-			method: options.method,
-			body: data,
-			headers: deepMerge(options.headers, customHeaders, true)
+			method,
+			body,
+			headers: deepMerge(headers, customHeaders, true)
 		}).then((res) => {
 			let i;
 			for (i in res) {
 				if (typeof res[i] != 'function') response[i] = res[i];
 			}
-			if (!(options.validateStatus ? options.validateStatus(res.status) : res.ok)) {
+			if (!(validateStatus ? validateStatus(res.status) : res.ok)) {
 				return Promise.reject(res);
 			}
-			const withData = options.responseType === 'stream'
+			const withData = responseType === 'stream'
 				? Promise.resolve(res.body)
-				: res[options.responseType || 'text']();
+				: res[responseType || 'text']();
 			return withData.then((data) => {
-				response.data = data;
+				response = {
+					...response,
+					data
+				};
 				return response;
 			});
 		});
