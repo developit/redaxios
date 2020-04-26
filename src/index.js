@@ -120,6 +120,19 @@ export default (function create(defaults) {
 	}
 
 	/**
+	 * @private
+	 */
+	function transformResponse(data) {
+		if (typeof data === 'string') {
+			try {
+				data = JSON.parse(data);
+			}
+			catch (e) {}
+		}
+		return data;
+	}
+
+	/**
 	 * Issues a request.
 	 * @public
 	 * @param {string} [url]
@@ -184,7 +197,7 @@ export default (function create(defaults) {
 				? Promise.resolve(res.body)
 				: res[options.responseType || 'text']();
 			return withData.then((data) => {
-				response.data = data;
+				response.data = transformResponse(data);
 				return response;
 			});
 		});

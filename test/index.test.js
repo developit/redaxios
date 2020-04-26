@@ -50,6 +50,15 @@ describe('redaxios', () => {
 		expect(res.data).toEqual({ hello: 'world' });
 	});
 
+	it('response should be parsed json', async () => {
+		const req = axios.get(jsonExample);
+		expect(req).toBeInstanceOf(Promise);
+		const res = await req;
+		expect(res).toBeInstanceOf(Object);
+		expect(res.status).toEqual(200);
+		expect(res.data).toBeInstanceOf(Object);
+	});
+
 	it('should issue POST requests', async () => {
 		const oldFetch = window.fetch;
 		try {
