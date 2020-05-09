@@ -6,6 +6,7 @@
   "main": "dist/redaxios.js",
   "umd:main": "dist/redaxios.umd.js",
   "module": "dist/redaxios.module.js",
+  "types": "./index.d.ts",
   "scripts": {
     "build": "microbundle",
     "test": "eslint src test && karmatic",
