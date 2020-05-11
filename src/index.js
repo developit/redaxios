@@ -142,11 +142,14 @@ export default (function create(defaults) {
 				}
 			}
 		}
-		
+
 		const fetchFunc = options.fetch || fetch;
 		const customHeaders = {};
 
-		if (data && typeof data === 'object') {
+		if (data && data instanceof FormData) {
+			customHeaders['Content-Type'] = 'application/x-www-form-urlencoded';
+		}
+		else if (data && typeof data === 'object') {
 			data = JSON.stringify(data);
 			customHeaders['Content-Type'] = 'application/json';
 		}
