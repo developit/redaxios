@@ -142,7 +142,7 @@ export default (function create(defaults) {
 				}
 			}
 		}
-		
+
 		const fetchFunc = options.fetch || fetch;
 		const customHeaders = {};
 
@@ -172,7 +172,8 @@ export default (function create(defaults) {
 		return fetchFunc(url, {
 			method: options.method,
 			body: data,
-			headers: deepMerge(options.headers, customHeaders, true)
+			headers: deepMerge(options.headers, customHeaders, true),
+			credentials: options.withCredentials === true ? 'include' : 'same-origin'
 		}).then((res) => {
 			let i;
 			for (i in res) {
