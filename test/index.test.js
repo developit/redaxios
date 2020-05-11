@@ -85,17 +85,23 @@ describe('redaxios', () => {
 	});
 
 	it('should send formData as application/x-www-form-urlencoded', async() => {
-		window.fetch = jasmine.createSpy('fetch').and.returnValue(Promise.resolve({ ok: true, status: 200, text: () => Promise.resolve('yep') }));
-		const data = new FormData();
-		data.append('hello', 'world');
-		axios.post('/foo', data);
-		expect(window.fetch).toHaveBeenCalledTimes(1);
-		expect(window.fetch).toHaveBeenCalledWith('/foo', jasmine.objectContaining({
-			method: 'post',
-			headers: {
-				'content-type': 'application/x-www-form-urlencoded'
-			},
-			body: data
-		}));
+		const oldFetch = window.fetch;
+		try {
+			window.fetch = jasmine.createSpy('fetch').and.returnValue(Promise.resolve({ ok: true, status: 200, text: () => Promise.resolve('yep') }));
+			const data = new FormData();
+			data.append('hello', 'world');
+			axios.post('/foo', data);
+			expect(window.fetch).toHaveBeenCalledTimes(1);
+			expect(window.fetch).toHaveBeenCalledWith('/foo', jasmine.objectContaining({
+				method: 'post',
+				headers: {
+					'content-type': 'application/x-www-form-urlencoded'
+				},
+				body: data
+			}));
+		}
+		finally {
+			window.fetch = oldFetch;
+		}
 	});
 });
