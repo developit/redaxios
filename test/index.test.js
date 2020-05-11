@@ -15,6 +15,7 @@
 import axios from '../src/index.js';
 import textExample from 'file-loader!./fixtures/example.txt';
 import jsonExample from 'file-loader!./fixtures/example.json.txt';
+import fetch from 'isomorphic-fetch';
 
 describe('redaxios', () => {
 	it('smoke test', () => {
@@ -74,6 +75,15 @@ describe('redaxios', () => {
 		}
 	});
 
+	it('should accept a custom fetch implementation', async () => {
+		const req = axios.get(jsonExample, { fetch });
+		expect(req).toBeInstanceOf(Promise);
+		const res = await req;
+		expect(res).toBeInstanceOf(Object);
+		expect(res.status).toEqual(200);
+		expect(JSON.parse(res.data)).toEqual({ hello: 'world' });
+	});
+
 	it('pre-request interceptor', async () => {
 		const preRequestInterceptor = axios.interceptors.request.use((config) => {
 			config.test = 'testValue';
@@ -122,5 +132,5 @@ describe('redaxios', () => {
 		const newRes = await newReq;
 		expect(newRes).toBeInstanceOf(Object);
 		expect(newRes.data).toEqual({ hello: 'world' });
-	});
+  });
 });
