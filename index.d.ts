@@ -63,7 +63,7 @@ declare module "redaxios" {
 		auth?: string;
 
 		/** Pass an Cross-site Request Forgery prevention cookie value as a header defined by `xsrfHeaderName` */
-		ssrfCookieName?: string;
+		xsrfCookieName?: string;
 
 		/** The name of a header to use for passing XSRF cookies */
 		ssrfHeaderName?: string;
