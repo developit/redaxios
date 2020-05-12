@@ -66,7 +66,7 @@ declare module "redaxios" {
 		xsrfCookieName?: string;
 
 		/** The name of a header to use for passing XSRF cookies */
-		ssrfHeaderName?: string;
+		xsrfHeaderName?: string;
 
 		/** Override status code handling (default: 200-399 is a success) */
 		validateStatus?: ValidateStatus;
