@@ -64,6 +64,32 @@ export default (function create(defaults) {
 	}
 
 	/**
+	 * Builds request url based on query string parameters
+	 * @private
+	 * @param {string} url
+	 * @param {object|URLSearchParams} [params]
+	 * @param {function} [serializer]
+	 * @returns {string}
+	 */
+	function buildUrl(url, params, serializer) {
+		if (!params) {
+			return url;
+		}
+
+		let serializedParams;
+		if (serializer) {
+			serializedParams = serializer(params);
+		} else if (params instanceof URLSearchParams) {
+			serializedParams = params.toString();
+		} else {
+			serializedParams = (new URLSearchParams(params)).toString();
+		}
+
+		const divider = url.indexOf('?') === -1 ? '?' : '&';
+		return url + divider + serializedParams;
+	}
+
+	/**
 	 * @public
 	 * @type {((config?: Options) => Promise<Response>) | ((url: string, config?: Options) => Promise<Response>)}
 	 */
@@ -133,6 +159,7 @@ export default (function create(defaults) {
 		}
 		const options = deepMerge(defaults, config || {});
 		let data = options.data;
+		url = buildUrl(url, options.params, options.paramsSerializer);
 
 		if (options.transformRequest) {
 			for (let i = 0; i < options.transformRequest.length; i++) {
@@ -142,7 +169,7 @@ export default (function create(defaults) {
 				}
 			}
 		}
-		
+
 		const fetchFunc = options.fetch || fetch;
 		const customHeaders = {};
 

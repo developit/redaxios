@@ -83,4 +83,34 @@ describe('redaxios', () => {
 		expect(res.status).toEqual(200);
 		expect(JSON.parse(res.data)).toEqual({ hello: 'world' });
 	});
+
+	it('should support params and paramsSerializer options', async () => {
+		const oldFetch = window.fetch;
+		window.fetch = jasmine.createSpy('fetch').and.returnValue(Promise.resolve());
+
+		axios.get('/foo');
+		expect(window.fetch).toHaveBeenCalledTimes(1);
+		expect(window.fetch).toHaveBeenCalledWith('/foo', jasmine.any(Object));
+
+		let params = { a: 1, b: true };
+		axios.get('/foo', { params });
+		expect(window.fetch).toHaveBeenCalledTimes(2);
+		expect(window.fetch).toHaveBeenCalledWith('/foo?a=1&b=true', jasmine.any(Object));
+
+		axios.get('/foo?c=42', { params });
+		expect(window.fetch).toHaveBeenCalledTimes(3);
+		expect(window.fetch).toHaveBeenCalledWith('/foo?c=42&a=1&b=true', jasmine.any(Object));
+
+		params = new URLSearchParams({ d: 'test' });
+		axios.get('/foo', { params });
+		expect(window.fetch).toHaveBeenCalledTimes(4);
+		expect(window.fetch).toHaveBeenCalledWith('/foo?d=test', jasmine.any(Object));
+
+		const paramsSerializer = params => 'e=iamthelaw';
+		axios.get('/foo', { params, paramsSerializer });
+		expect(window.fetch).toHaveBeenCalledTimes(5);
+		expect(window.fetch).toHaveBeenCalledWith('/foo?e=iamthelaw', jasmine.any(Object));
+
+		window.fetch = oldFetch;
+	});
 });
