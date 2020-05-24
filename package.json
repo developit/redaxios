@@ -6,8 +6,9 @@
   "main": "dist/redaxios.js",
   "umd:main": "dist/redaxios.umd.js",
   "module": "dist/redaxios.module.js",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "build": "microbundle",
+    "build": "microbundle && tsc",
     "test": "eslint src test && karmatic",
     "release": "npm t && git commit -am \"$npm_package_version\" && git tag $npm_package_version && git push && git push --tags && npm publish"
   },
@@ -35,6 +36,7 @@
     "karmatic": "^1.4.0",
     "microbundle": "^0.11.0",
     "sinon": "^8.0.4",
+    "typescript": "3.9.3",
     "webpack": "^4.41.5"
   }
 }

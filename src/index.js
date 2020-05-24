@@ -15,7 +15,7 @@
  * @public
  * @typedef Options
  * @property {string} [url] the URL to request
- * @property {string} [method="get"] HTTP method, case-insensitive
+ * @property {'get'|'post'|'put'|'patch'|'delete'|'options'} [method="get"] HTTP method, case-insensitive
  * @property {Headers} [headers] Request headers
  * @property {FormData|string|object} [body] a body, optionally encoded, to send
  * @property {'text'|'json'|'stream'|'blob'|'arrayBuffer'|'formData'|'stream'} [responseType="text"] An encoding to use for the response
@@ -24,6 +24,8 @@
  * @property {string} [xsrfHeaderName] The name of a header to use for passing XSRF cookies
  * @property {(status: number) => boolean} [validateStatus] Override status code handling (default: 200-399 is a success)
  * @property {Array<(body: any, headers: Headers) => any?>} [transformRequest] An array of transformations to apply to the outgoing request
+ * @property {typeof window.fetch} [fetch] Custom window.fetch implementation
+ * @property {any} [data]
  */
 
 /**
@@ -34,20 +36,30 @@
 
 /**
  * @public
+ * @template T
  * @typedef Response
+ * @property {number} status
+ * @property {string} statusText
  * @property {Options} config the request configuration
- * @property {any} data the decoded response body
+ * @property {T} data the decoded response body
+ * @property {Headers} headers
+ * @property {boolean} redirect
+ * @property {string} url
+ * @property {ResponseType} type
+ * @property {ReadableStream<Uint8Array> | null} body
+ * @property {boolean} bodyUsed
  */
 
 /** */
-export default (function create(defaults) {
+export default (function create(/** @type {Options} */ defaults) {
 	defaults = defaults || {};
 
 	/**
 	 * Creates a request factory bound to the given HTTP method.
 	 * @private
+	 * @template T
 	 * @param {string} method
-	 * @returns {(url: string, config?: Options) => Promise<Response>}
+	 * @returns {<T=any>(url: string, config?: Options) => Promise<Response<T>>}
 	 */
 	function createBodylessMethod(method) {
 		return (url, config) => redaxios(url, Object.assign({ method }, config));
@@ -56,16 +68,19 @@ export default (function create(defaults) {
 	/**
 	 * Creates a request factory bound to the given HTTP method.
 	 * @private
+	 * @template T
 	 * @param {string} method
-	 * @returns {(url: string, body?: any, config?: Options) => Promise<Response>}
+	 * @returns {<T=any>(url: string, body?: any, config?: Options) => Promise<Response<T>>}
 	 */
 	function createBodyMethod(method) {
 		return (url, data, config) => redaxios(url, Object.assign({ method, data }, config));
 	}
 
+
 	/**
 	 * @public
-	 * @type {((config?: Options) => Promise<Response>) | ((url: string, config?: Options) => Promise<Response>)}
+	 * @template T
+	 * @type {(<T = any>(config?: Options) => Promise<Response<T>>) | (<T = any>(url: string, config?: Options) => Promise<Response<T>>)}
 	 */
 	redaxios.request = redaxios;
 
@@ -90,19 +105,31 @@ export default (function create(defaults) {
 	/** @public */
 	redaxios.all = Promise.all;
 
-	/** @public */
+	/**
+	 * @public
+	 * @template T,R
+	 * @param {(...args: T[]) => R} fn
+	 * @returns {(array: T[]) => R}
+	 */
 	redaxios.spread = function(fn) {
 		return function (results) {
 			return fn.apply(this, results);
 		};
 	};
 
+/**
+ * @private
+ * @param {Record<string,any>} opts
+ * @param {Record<string,any>} overrides
+ * @param {boolean} [lowerCase]
+ * @returns {Record<string,any>}
+ */
 	function deepMerge(opts, overrides, lowerCase) {
 		if (Array.isArray(opts)) {
 			return opts.concat(overrides);
 		}
 		if (overrides && typeof overrides == 'object') {
-			let out = {}, i;
+			let out = /** @type {Record<string,any>} */({}), i;
 			if (opts) {
 				for (i in opts) {
 					let key = lowerCase ? i.toLowerCase() : i;
@@ -122,15 +149,19 @@ export default (function create(defaults) {
 	/**
 	 * Issues a request.
 	 * @public
-	 * @param {string} [url]
+	 * @template T
+	 * @param {string | Options} url
 	 * @param {Options} [config]
-	 * @returns {Promise<Response>}
+	 * @returns {Promise<Response<T>>}
 	 */
 	function redaxios(url, config) {
 		if (typeof url !== 'string') {
 			config = url;
 			url = config.url;
 		}
+		/**
+		 * @type {Options}
+		 */
 		const options = deepMerge(defaults, config || {});
 		let data = options.data;
 
@@ -142,8 +173,11 @@ export default (function create(defaults) {
 				}
 			}
 		}
-		
+
 		const fetchFunc = options.fetch || fetch;
+		/**
+		 * @type {{'Content-Type':'application/json';Authorization: string} & Headers}
+		 */
 		const customHeaders = {};
 
 		if (data && typeof data === 'object') {
@@ -165,9 +199,9 @@ export default (function create(defaults) {
 			customHeaders.Authorization = options.auth;
 		}
 
-		/** @type {Response} */
+		/** @type {Response<any>} */
 		const response = {};
-		response.config = config;
+		response.config = /** @type {Options} */ (config);
 
 		return fetchFunc(url, {
 			method: options.method,
@@ -191,8 +225,15 @@ export default (function create(defaults) {
 		});
 	}
 
-	redaxios.CancelToken = self.AbortController || Object;
+ /**
+  * @public
+  * @type {AbortController}
+  */
+  redaxios.CancelToken = /** @type {any} */ (self).AbortController || Object;
 
+ /**
+  * @public
+  */
 	redaxios.create = create;
 
 	return redaxios;
