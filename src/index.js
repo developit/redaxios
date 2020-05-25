@@ -60,7 +60,8 @@ export default (function create(defaults) {
 	 * @returns {(url: string, body?: any, config?: Options) => Promise<Response>}
 	 */
 	function createBodyMethod(method) {
-		return (url, data, config) => redaxios(url, Object.assign({ method, data }, config));
+		return (url, data, config) =>
+			redaxios(url, Object.assign({ method, data }, config));
 	}
 
 	/**
@@ -91,7 +92,7 @@ export default (function create(defaults) {
 	redaxios.all = Promise.all;
 
 	/** @public */
-	redaxios.spread = function(fn) {
+	redaxios.spread = function (fn) {
 		return function (results) {
 			return fn.apply(this, results);
 		};
@@ -102,7 +103,8 @@ export default (function create(defaults) {
 			return opts.concat(overrides);
 		}
 		if (overrides && typeof overrides == 'object') {
-			let out = {}, i;
+			let out = {},
+				i;
 			if (opts) {
 				for (i in opts) {
 					let key = lowerCase ? i.toLowerCase() : i;
@@ -112,7 +114,10 @@ export default (function create(defaults) {
 			for (i in overrides) {
 				let key = lowerCase ? i.toLowerCase() : i;
 				if (key === 'headers') lowerCase = true;
-				out[key] = i in out ? deepMerge(out[key], overrides[i], lowerCase) : overrides[i];
+				out[key] =
+					i in out
+						? deepMerge(out[key], overrides[i], lowerCase)
+						: overrides[i];
 			}
 			return out;
 		}
@@ -142,7 +147,7 @@ export default (function create(defaults) {
 				}
 			}
 		}
-		
+
 		const fetchFunc = options.fetch || fetch;
 		const customHeaders = {};
 
@@ -155,7 +160,9 @@ export default (function create(defaults) {
 			let parts = document.cookie.split(/ *[;=] */);
 			for (let i = 0; i < parts.length; i += 2) {
 				if (parts[i] == options.xsrfCookieName) {
-					customHeaders[options.xsrfHeaderName] = decodeURIComponent(parts[i+1]);
+					customHeaders[options.xsrfHeaderName] = decodeURIComponent(
+						parts[i + 1]
+					);
 					break;
 				}
 			}
@@ -172,18 +179,21 @@ export default (function create(defaults) {
 		return fetchFunc(url, {
 			method: options.method,
 			body: data,
-			headers: deepMerge(options.headers, customHeaders, true)
+			headers: deepMerge(options.headers, customHeaders, true),
 		}).then((res) => {
 			let i;
 			for (i in res) {
 				if (typeof res[i] != 'function') response[i] = res[i];
 			}
-			if (!(options.validateStatus ? options.validateStatus(res.status) : res.ok)) {
+			if (
+				!(options.validateStatus ? options.validateStatus(res.status) : res.ok)
+			) {
 				return Promise.reject(res);
 			}
-			const withData = options.responseType === 'stream'
-				? Promise.resolve(res.body)
-				: res[options.responseType || 'text']();
+			const withData =
+				options.responseType === 'stream'
+					? Promise.resolve(res.body)
+					: res[options.responseType || 'text']();
 			return withData.then((data) => {
 				response.data = data;
 				return response;

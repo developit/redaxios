@@ -1,47 +1,47 @@
 {
-  "name": "redaxios",
-  "version": "0.2.0",
-  "description": "The API from Axios, as a tiny abstraction over Fetch.",
-  "source": "src/index.js",
-  "main": "dist/redaxios.js",
-  "umd:main": "dist/redaxios.umd.js",
-  "module": "dist/redaxios.module.js",
-  "scripts": {
-    "build": "microbundle",
-    "test": "npm run format:check && eslint src test && karmatic",
-    "release": "npm t && git commit -am \"$npm_package_version\" && git tag $npm_package_version && git push && git push --tags && npm publish",
-    "format": "prettier --write './**/*.{js,json,yml,md}'",
-    "format:check": "prettier --check './**/*.{js,json,yml,md}'"
-  },
-  "files": [
-    "dist",
-    "src"
-  ],
-  "eslintConfig": {
-    "extends": [
-      "developit",
-      "prettier"
-    ]
-  },
-  "repository": "developit/redaxios",
-  "keywords": [
-    "axios",
-    "fetch"
-  ],
-  "author": "Jason Miller <jason@developit.ca>",
-  "license": "Apache-2.0",
-  "homepage": "https://github.com/developit/redaxios",
-  "devDependencies": {
-    "eslint": "^6.8.0",
-    "eslint-config-developit": "^1.1.1",
-    "eslint-config-prettier": "6.11.0",
-    "file-loader": "^5.0.2",
-    "isomorphic-fetch": "^2.2.1",
-    "jest": "^24.9.0",
-    "karmatic": "^1.4.0",
-    "microbundle": "^0.11.0",
-    "prettier": "2.0.5",
-    "sinon": "^8.0.4",
-    "webpack": "^4.41.5"
-  }
+	"name": "redaxios",
+	"version": "0.2.0",
+	"description": "The API from Axios, as a tiny abstraction over Fetch.",
+	"source": "src/index.js",
+	"main": "dist/redaxios.js",
+	"umd:main": "dist/redaxios.umd.js",
+	"module": "dist/redaxios.module.js",
+	"scripts": {
+		"build": "microbundle",
+		"test": "npm run format:check && eslint src test && karmatic",
+		"release": "npm t && git commit -am \"$npm_package_version\" && git tag $npm_package_version && git push && git push --tags && npm publish",
+		"format": "prettier --write './**/*.{js,json,yml,md}'",
+		"format:check": "prettier --check './**/*.{js,json,yml,md}'"
+	},
+	"files": [
+		"dist",
+		"src"
+	],
+	"eslintConfig": {
+		"extends": [
+			"developit",
+			"prettier"
+		]
+	},
+	"repository": "developit/redaxios",
+	"keywords": [
+		"axios",
+		"fetch"
+	],
+	"author": "Jason Miller <jason@developit.ca>",
+	"license": "Apache-2.0",
+	"homepage": "https://github.com/developit/redaxios",
+	"devDependencies": {
+		"eslint": "^6.8.0",
+		"eslint-config-developit": "^1.1.1",
+		"eslint-config-prettier": "6.11.0",
+		"file-loader": "^5.0.2",
+		"isomorphic-fetch": "^2.2.1",
+		"jest": "^24.9.0",
+		"karmatic": "^1.4.0",
+		"microbundle": "^0.11.0",
+		"prettier": "2.0.5",
+		"sinon": "^8.0.4",
+		"webpack": "^4.41.5"
+	}
 }
