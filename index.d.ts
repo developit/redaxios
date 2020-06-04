@@ -30,14 +30,13 @@ declare module "redaxios" {
 		| "DELETE";
 
 	/** An encoding to use for the response */
-	export type ResponseType =
+      export type ResponseType =
 		| "text"
 		| "json"
 		| "stream"
 		| "blob"
 		| "arrayBuffer"
-		| "formData"
-		| "stream";
+		| "formData";
 
 	/** Override status code handling (default: 200-399 is a success) */
 	export type ValidateStatus = (status: number) => boolean;
