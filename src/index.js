@@ -146,7 +146,7 @@ export default (function create(defaults) {
 		const fetchFunc = options.fetch || fetch;
 		const customHeaders = {};
 
-		if (data && typeof data === 'object') {
+		if (data && typeof data === 'object' && !(data instanceof FormData)) {
 			data = JSON.stringify(data);
 			customHeaders['Content-Type'] = 'application/json';
 		}
