@@ -83,4 +83,21 @@ describe('redaxios', () => {
 		expect(res.status).toEqual(200);
 		expect(JSON.parse(res.data)).toEqual({ hello: 'world' });
 	});
+
+	it('should not send content-type when data contains FormData', async () => {
+		const oldFetch = window.fetch;
+		try {
+			window.fetch = jasmine.createSpy('fetch').and.returnValue(Promise.resolve());
+			axios.post('/foo', new FormData());
+			expect(window.fetch).toHaveBeenCalledTimes(1);
+			expect(window.fetch).not.toHaveBeenCalledWith('/foo', jasmine.objectContaining({
+				headers: {
+					'content-type': 'application/json'
+				}
+			}));
+		}
+		finally {
+			window.fetch = oldFetch;
+		}
+	});
 });
