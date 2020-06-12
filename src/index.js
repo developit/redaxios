@@ -173,7 +173,7 @@ export default (function create(defaults) {
 			method: options.method,
 			body: data,
 			headers: deepMerge(options.headers, customHeaders, true),
-			credentials: options.withCredentials === true ? 'include' : 'same-origin'
+			credentials: options.withCredentials && 'include'
 		}).then((res) => {
 			let i;
 			for (i in res) {
