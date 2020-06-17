@@ -192,7 +192,7 @@ export default (function create(defaults) {
 		});
 	}
 
-	redaxios.CancelToken = self.AbortController || Object;
+	redaxios.CancelToken = typeof self === 'object' && self.AbortController || Object;
 
 	redaxios.create = create;
 
