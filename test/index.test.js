@@ -75,6 +75,30 @@ describe('redaxios', () => {
 		}
 	});
 
+	it('should issue POST requests with FormData', async () => {
+		const oldFetch = window.fetch;
+		try {
+			window.fetch = jasmine.createSpy('fetch').and.returnValue(Promise.resolve({ ok: true, status: 200, text: () => Promise.resolve('yep') }));
+			const data = new FormData();
+			formData.append('hello', 'world');
+			const req = axios.post('/foo', formData, { headers: { 'content-type': 'multipart/form-data' } });
+			expect(window.fetch).toHaveBeenCalledTimes(1);
+			expect(window.fetch).toHaveBeenCalledWith('/foo', jasmine.objectContaining({
+				method: 'post',
+				headers: {
+					'content-type': 'multipart/form-data'
+				},
+				body: data
+			}));
+			const res = await req;
+			expect(res.status).toEqual(200);
+			expect(res.data).toEqual('yep');
+		}
+		finally {
+			window.fetch = oldFetch;
+		}
+	});
+	
 	it('should accept a custom fetch implementation', async () => {
 		const req = axios.get(jsonExample, { fetch });
 		expect(req).toBeInstanceOf(Promise);
