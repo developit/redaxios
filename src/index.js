@@ -129,7 +129,8 @@ export default (function create(/** @type {Options} */ defaults) {
 			return opts.concat(overrides);
 		}
 		if (overrides && typeof overrides == 'object') {
-			let out = /** @type {Record<string,any>} */({}), i;
+			let out = /** @type {Record<string,any>} */({}),
+				i;
 			if (opts) {
 				for (i in opts) {
 					let key = lowerCase ? i.toLowerCase() : i;
@@ -189,7 +190,7 @@ export default (function create(/** @type {Options} */ defaults) {
 			let parts = document.cookie.split(/ *[;=] */);
 			for (let i = 0; i < parts.length; i += 2) {
 				if (parts[i] == options.xsrfCookieName) {
-					customHeaders[options.xsrfHeaderName] = decodeURIComponent(parts[i+1]);
+					customHeaders[options.xsrfHeaderName] = decodeURIComponent(parts[i + 1]);
 					break;
 				}
 			}
@@ -197,6 +198,10 @@ export default (function create(/** @type {Options} */ defaults) {
 
 		if (options.auth) {
 			customHeaders.Authorization = options.auth;
+		}
+
+		if (options.baseURL) {
+			url = new URL(url, options.baseURL);
 		}
 
 		/** @type {Response<any>} */
@@ -216,9 +221,8 @@ export default (function create(/** @type {Options} */ defaults) {
 			if (!(options.validateStatus ? options.validateStatus(res.status) : res.ok)) {
 				return Promise.reject(res);
 			}
-			const withData = options.responseType === 'stream'
-				? Promise.resolve(res.body)
-				: res[options.responseType || 'text']();
+			const withData =
+				options.responseType === 'stream' ? Promise.resolve(res.body) : res[options.responseType || 'text']();
 			return withData.then((data) => {
 				response.data = data;
 				return response;

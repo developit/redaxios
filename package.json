@@ -9,15 +9,41 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "microbundle && tsc",
-    "test": "eslint src test && karmatic",
-    "release": "npm t && git commit -am \"$npm_package_version\" && git tag $npm_package_version && git push && git push --tags && npm publish"
+    "test": "npm run format:check && eslint src test && karmatic",
+    "release": "npm t && git commit -am \"$npm_package_version\" && git tag $npm_package_version && git push && git push --tags && npm publish",
+    "format": "prettier --write './**/*.{js,json,yml,md}'",
+    "format:check": "prettier --check './**/*.{js,json,yml,md}'"
   },
   "files": [
     "dist",
     "src"
   ],
   "eslintConfig": {
-    "extends": "developit"
+    "extends": [
+      "developit",
+      "prettier"
+    ],
+    "rules": {
+      "jest/no-jasmine-globals": "off"
+    }
+  },
+  "prettier": {
+    "arrowParens": "always",
+    "trailingComma": "none",
+    "singleQuote": true,
+    "endOfLine": "lf",
+    "useTabs": true,
+    "printWidth": 120,
+    "overrides": [
+      {
+        "files": "**/*.json",
+        "options": {
+          "parser": "json-stringify",
+          "useTabs": false,
+          "tabWidth": 2
+        }
+      }
+    ]
   },
   "repository": "developit/redaxios",
   "keywords": [
@@ -28,13 +54,16 @@
   "license": "Apache-2.0",
   "homepage": "https://github.com/developit/redaxios",
   "devDependencies": {
+    "core-js": "^2.6.11",
     "eslint": "^6.8.0",
     "eslint-config-developit": "^1.1.1",
+    "eslint-config-prettier": "6.11.0",
     "file-loader": "^5.0.2",
     "isomorphic-fetch": "^2.2.1",
     "jest": "^24.9.0",
     "karmatic": "^1.4.0",
     "microbundle": "^0.11.0",
+    "prettier": "2.0.5",
     "sinon": "^8.0.4",
     "typescript": "3.9.3",
     "webpack": "^4.41.5"
