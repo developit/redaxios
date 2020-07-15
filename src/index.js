@@ -236,7 +236,7 @@ export default (function create(/** @type {Options} */ defaults) {
 	 * @public
 	 * @type {AbortController}
 	 */
-	redaxios.CancelToken = /** @type {any} */ (self).AbortController || Object;
+	redaxios.CancelToken = /** @type {any} */ (typeof AbortController === 'function' ? AbortController : Object);
 
 	/**
 	 * @public
