@@ -91,7 +91,7 @@ export default (function create(defaults) {
 	redaxios.all = Promise.all;
 
 	/** @public */
-	redaxios.spread = function(fn) {
+	redaxios.spread = function (fn) {
 		return function (results) {
 			return fn.apply(this, results);
 		};
@@ -102,7 +102,8 @@ export default (function create(defaults) {
 			return opts.concat(overrides);
 		}
 		if (overrides && typeof overrides == 'object') {
-			let out = {}, i;
+			let out = {},
+				i;
 			if (opts) {
 				for (i in opts) {
 					let key = lowerCase ? i.toLowerCase() : i;
@@ -142,7 +143,7 @@ export default (function create(defaults) {
 				}
 			}
 		}
-		
+
 		const fetchFunc = options.fetch || fetch;
 		const customHeaders = {};
 
@@ -155,7 +156,7 @@ export default (function create(defaults) {
 			let parts = document.cookie.split(/ *[;=] */);
 			for (let i = 0; i < parts.length; i += 2) {
 				if (parts[i] == options.xsrfCookieName) {
-					customHeaders[options.xsrfHeaderName] = decodeURIComponent(parts[i+1]);
+					customHeaders[options.xsrfHeaderName] = decodeURIComponent(parts[i + 1]);
 					break;
 				}
 			}
@@ -165,6 +166,10 @@ export default (function create(defaults) {
 			customHeaders.Authorization = options.auth;
 		}
 
+		if (options.baseURL) {
+			url = new URL(url, options.baseURL);
+		}
+
 		/** @type {Response} */
 		const response = {};
 		response.config = config;
@@ -172,7 +177,8 @@ export default (function create(defaults) {
 		return fetchFunc(url, {
 			method: options.method,
 			body: data,
-			headers: deepMerge(options.headers, customHeaders, true)
+			headers: deepMerge(options.headers, customHeaders, true),
+			credentials: options.withCredentials && 'include'
 		}).then((res) => {
 			let i;
 			for (i in res) {
@@ -181,9 +187,8 @@ export default (function create(defaults) {
 			if (!(options.validateStatus ? options.validateStatus(res.status) : res.ok)) {
 				return Promise.reject(res);
 			}
-			const withData = options.responseType === 'stream'
-				? Promise.resolve(res.body)
-				: res[options.responseType || 'text']();
+			const withData =
+				options.responseType === 'stream' ? Promise.resolve(res.body) : res[options.responseType || 'text']();
 			return withData.then((data) => {
 				response.data = data;
 				return response;
