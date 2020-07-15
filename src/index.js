@@ -15,7 +15,7 @@
  * @public
  * @typedef Options
  * @property {string} [url] the URL to request
- * @property {'get'|'post'|'put'|'patch'|'delete'|'options'} [method="get"] HTTP method, case-insensitive
+ * @property {'get'|'post'|'put'|'patch'|'delete'|'options'|'head'|'GET'|'POST'|'PUT'|'PATCH'|'DELETE'|'OPTIONS'|'HEAD'} [method="get"] HTTP method, case-insensitive
  * @property {Headers} [headers] Request headers
  * @property {FormData|string|object} [body] a body, optionally encoded, to send
  * @property {'text'|'json'|'stream'|'blob'|'arrayBuffer'|'formData'|'stream'} [responseType="text"] An encoding to use for the response
