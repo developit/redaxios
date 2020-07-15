@@ -108,16 +108,7 @@ describe('redaxios', () => {
 		}
 	});
 
-	it('should accept a custom fetch implementation', async () => {
-		const req = axios.get(jsonExample, { fetch });
-		expect(req).toBeInstanceOf(Promise);
-		const res = await req;
-		expect(res).toBeInstanceOf(Object);
-		expect(res.status).toEqual(200);
-		expect(JSON.parse(res.data)).toEqual({ hello: 'world' });
-	});
-
-	it('should not send content-type when data contains FormData', async () => {
+	it('should not send JSON content-type when data contains FormData', async () => {
 		const oldFetch = window.fetch;
 		try {
 			window.fetch = jasmine.createSpy('fetch').and.returnValue(Promise.resolve());
@@ -134,5 +125,46 @@ describe('redaxios', () => {
 		} finally {
 			window.fetch = oldFetch;
 		}
+	});
+
+	it('should preserve global content-type option when using FormData', async () => {
+		const oldFetch = window.fetch;
+		try {
+			window.fetch = jasmine.createSpy('fetch').and.returnValue(
+				Promise.resolve({
+					ok: true,
+					status: 200,
+					text: () => Promise.resolve('yep')
+				})
+			);
+			const data = new FormData();
+			data.append('hello', 'world');
+			const req = axios.post('/foo', data, { headers: { 'content-type': 'multipart/form-data' } });
+			expect(window.fetch).toHaveBeenCalledTimes(1);
+			expect(window.fetch).toHaveBeenCalledWith(
+				'/foo',
+				jasmine.objectContaining({
+					method: 'post',
+					headers: {
+						'content-type': 'multipart/form-data'
+					},
+					body: data
+				})
+			);
+			const res = await req;
+			expect(res.status).toEqual(200);
+			expect(res.data).toEqual('yep');
+		} finally {
+			window.fetch = oldFetch;
+		}
+	});
+
+	it('should accept a custom fetch implementation', async () => {
+		const req = axios.get(jsonExample, { fetch });
+		expect(req).toBeInstanceOf(Promise);
+		const res = await req;
+		expect(res).toBeInstanceOf(Object);
+		expect(res.status).toEqual(200);
+		expect(JSON.parse(res.data)).toEqual({ hello: 'world' });
 	});
 });
