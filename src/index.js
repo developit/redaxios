@@ -183,7 +183,7 @@ export default (function create(/** @type {Options} */ defaults) {
 		 */
 		const customHeaders = {};
 
-		if (data && typeof data === 'object' && !(data instanceof FormData)) {
+		if (data && typeof data === 'object' && typeof data.append !== 'function') {
 			data = JSON.stringify(data);
 			customHeaders['Content-Type'] = 'application/json';
 		}

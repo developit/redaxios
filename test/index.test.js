@@ -123,13 +123,15 @@ describe('redaxios', () => {
 			window.fetch = jasmine.createSpy('fetch').and.returnValue(Promise.resolve());
 			axios.post('/foo', new FormData());
 			expect(window.fetch).toHaveBeenCalledTimes(1);
-			expect(window.fetch).not.toHaveBeenCalledWith('/foo', jasmine.objectContaining({
-				headers: {
-					'content-type': 'application/json'
-				}
-			}));
-		}
-		finally {
+			expect(window.fetch).not.toHaveBeenCalledWith(
+				'/foo',
+				jasmine.objectContaining({
+					headers: {
+						'content-type': 'application/json'
+					}
+				})
+			);
+		} finally {
 			window.fetch = oldFetch;
 		}
 	});
