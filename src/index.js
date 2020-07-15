@@ -15,15 +15,19 @@
  * @public
  * @typedef Options
  * @property {string} [url] the URL to request
- * @property {string} [method="get"] HTTP method, case-insensitive
+ * @property {'get'|'post'|'put'|'patch'|'delete'|'options'|'head'|'GET'|'POST'|'PUT'|'PATCH'|'DELETE'|'OPTIONS'|'HEAD'} [method="get"] HTTP method, case-insensitive
  * @property {Headers} [headers] Request headers
  * @property {FormData|string|object} [body] a body, optionally encoded, to send
  * @property {'text'|'json'|'stream'|'blob'|'arrayBuffer'|'formData'|'stream'} [responseType="text"] An encoding to use for the response
+ * @property {boolean} [withCredentials] Send the request with credentials like cookies
  * @property {string} [auth] Authorization header value to send with the request
  * @property {string} [xsrfCookieName] Pass an Cross-site Request Forgery prevention cookie value as a header defined by `xsrfHeaderName`
  * @property {string} [xsrfHeaderName] The name of a header to use for passing XSRF cookies
  * @property {(status: number) => boolean} [validateStatus] Override status code handling (default: 200-399 is a success)
  * @property {Array<(body: any, headers: Headers) => any?>} [transformRequest] An array of transformations to apply to the outgoing request
+ * @property {string} [baseURL] a base URL from which to resolve all URLs
+ * @property {typeof window.fetch} [fetch] Custom window.fetch implementation
+ * @property {any} [data]
  */
 
 /**
@@ -34,20 +38,30 @@
 
 /**
  * @public
+ * @template T
  * @typedef Response
+ * @property {number} status
+ * @property {string} statusText
  * @property {Options} config the request configuration
- * @property {any} data the decoded response body
+ * @property {T} data the decoded response body
+ * @property {Headers} headers
+ * @property {boolean} redirect
+ * @property {string} url
+ * @property {ResponseType} type
+ * @property {ReadableStream<Uint8Array> | null} body
+ * @property {boolean} bodyUsed
  */
 
 /** */
-export default (function create(defaults) {
+export default (function create(/** @type {Options} */ defaults) {
 	defaults = defaults || {};
 
 	/**
 	 * Creates a request factory bound to the given HTTP method.
 	 * @private
+	 * @template T
 	 * @param {string} method
-	 * @returns {(url: string, config?: Options) => Promise<Response>}
+	 * @returns {<T=any>(url: string, config?: Options) => Promise<Response<T>>}
 	 */
 	function createBodylessMethod(method) {
 		return (url, config) => redaxios(url, Object.assign({ method }, config));
@@ -56,8 +70,9 @@ export default (function create(defaults) {
 	/**
 	 * Creates a request factory bound to the given HTTP method.
 	 * @private
+	 * @template T
 	 * @param {string} method
-	 * @returns {(url: string, body?: any, config?: Options) => Promise<Response>}
+	 * @returns {<T=any>(url: string, body?: any, config?: Options) => Promise<Response<T>>}
 	 */
 	function createBodyMethod(method) {
 		return (url, data, config) => redaxios(url, Object.assign({ method, data }, config));
@@ -91,7 +106,8 @@ export default (function create(defaults) {
 
 	/**
 	 * @public
-	 * @type {((config?: Options) => Promise<Response>) | ((url: string, config?: Options) => Promise<Response>)}
+	 * @template T
+	 * @type {(<T = any>(config?: Options) => Promise<Response<T>>) | (<T = any>(url: string, config?: Options) => Promise<Response<T>>)}
 	 */
 	redaxios.request = redaxios;
 
@@ -116,19 +132,32 @@ export default (function create(defaults) {
 	/** @public */
 	redaxios.all = Promise.all;
 
-	/** @public */
-	redaxios.spread = function(fn) {
+	/**
+	 * @public
+	 * @template T,R
+	 * @param {(...args: T[]) => R} fn
+	 * @returns {(array: T[]) => R}
+	 */
+	redaxios.spread = function (fn) {
 		return function (results) {
 			return fn.apply(this, results);
 		};
 	};
 
+	/**
+	 * @private
+	 * @param {Record<string,any>} opts
+	 * @param {Record<string,any>} overrides
+	 * @param {boolean} [lowerCase]
+	 * @returns {Record<string,any>}
+	 */
 	function deepMerge(opts, overrides, lowerCase) {
 		if (Array.isArray(opts)) {
 			return opts.concat(overrides);
 		}
 		if (overrides && typeof overrides == 'object') {
-			let out = {}, i;
+			let out = /** @type {Record<string,any>} */ ({}),
+				i;
 			if (opts) {
 				for (i in opts) {
 					let key = lowerCase ? i.toLowerCase() : i;
@@ -148,15 +177,20 @@ export default (function create(defaults) {
 	/**
 	 * Issues a request.
 	 * @public
-	 * @param {string} [url]
+	 * @template T
+	 * @param {string | Options} url
 	 * @param {Options} [config]
-	 * @returns {Promise<Response>}
+	 * @returns {Promise<Response<T>>}
 	 */
 	function redaxios(url, config) {
 		if (typeof url !== 'string') {
 			config = url;
 			url = config.url;
 		}
+
+		/**
+		 * @type {Options}
+		 */
 		const options = deepMerge(defaults, config || {});
 		let data = options.data;
 		url = buildUrl(url, options.params, options.paramsSerializer);
@@ -171,9 +205,12 @@ export default (function create(defaults) {
 		}
 
 		const fetchFunc = options.fetch || fetch;
+		/**
+		 * @type {{'Content-Type':'application/json';Authorization: string} & Headers}
+		 */
 		const customHeaders = {};
 
-		if (data && typeof data === 'object') {
+		if (data && typeof data === 'object' && typeof data.append !== 'function') {
 			data = JSON.stringify(data);
 			customHeaders['Content-Type'] = 'application/json';
 		}
@@ -182,7 +219,7 @@ export default (function create(defaults) {
 			let parts = document.cookie.split(/ *[;=] */);
 			for (let i = 0; i < parts.length; i += 2) {
 				if (parts[i] == options.xsrfCookieName) {
-					customHeaders[options.xsrfHeaderName] = decodeURIComponent(parts[i+1]);
+					customHeaders[options.xsrfHeaderName] = decodeURIComponent(parts[i + 1]);
 					break;
 				}
 			}
@@ -192,15 +229,19 @@ export default (function create(defaults) {
 			customHeaders.Authorization = options.auth;
 		}
 
-		/** @type {Response} */
+		if (options.baseURL) {
+			url = new URL(url, options.baseURL) + '';
+		}
+
+		/** @type {Response<any>} */
 		const response = {};
-		response.config = config;
+		response.config = /** @type {Options} */ (config);
 
 		return fetchFunc(url, {
 			method: options.method,
 			body: data,
 			headers: deepMerge(options.headers, customHeaders, true),
-			credentials: options.withCredentials && 'include'
+			credentials: options.withCredentials ? 'include' : undefined
 		}).then((res) => {
 			let i;
 			for (i in res) {
@@ -209,9 +250,8 @@ export default (function create(defaults) {
 			if (!(options.validateStatus ? options.validateStatus(res.status) : res.ok)) {
 				return Promise.reject(res);
 			}
-			const withData = options.responseType === 'stream'
-				? Promise.resolve(res.body)
-				: res[options.responseType || 'text']();
+			const withData =
+				options.responseType === 'stream' ? Promise.resolve(res.body) : res[options.responseType || 'text']();
 			return withData.then((data) => {
 				response.data = data;
 				return response;
@@ -219,8 +259,15 @@ export default (function create(defaults) {
 		});
 	}
 
-	redaxios.CancelToken = self.AbortController || Object;
+	/**
+	 * @public
+	 * @type {AbortController}
+	 */
+	redaxios.CancelToken = /** @type {any} */ (typeof AbortController === 'function' ? AbortController : Object);
 
+	/**
+	 * @public
+	 */
 	redaxios.create = create;
 
 	return redaxios;
