@@ -19,11 +19,13 @@
  * @property {Headers} [headers] Request headers
  * @property {FormData|string|object} [body] a body, optionally encoded, to send
  * @property {'text'|'json'|'stream'|'blob'|'arrayBuffer'|'formData'|'stream'} [responseType="text"] An encoding to use for the response
+ * @property {boolean} [withCredentials] Send the request with credentials like cookies
  * @property {string} [auth] Authorization header value to send with the request
  * @property {string} [xsrfCookieName] Pass an Cross-site Request Forgery prevention cookie value as a header defined by `xsrfHeaderName`
  * @property {string} [xsrfHeaderName] The name of a header to use for passing XSRF cookies
  * @property {(status: number) => boolean} [validateStatus] Override status code handling (default: 200-399 is a success)
  * @property {Array<(body: any, headers: Headers) => any?>} [transformRequest] An array of transformations to apply to the outgoing request
+ * @property {string} [baseURL] a base URL from which to resolve all URLs
  * @property {typeof window.fetch} [fetch] Custom window.fetch implementation
  * @property {any} [data]
  */
@@ -76,7 +78,6 @@ export default (function create(/** @type {Options} */ defaults) {
 		return (url, data, config) => redaxios(url, Object.assign({ method, data }, config));
 	}
 
-
 	/**
 	 * @public
 	 * @template T
@@ -111,25 +112,25 @@ export default (function create(/** @type {Options} */ defaults) {
 	 * @param {(...args: T[]) => R} fn
 	 * @returns {(array: T[]) => R}
 	 */
-	redaxios.spread = function(fn) {
+	redaxios.spread = function (fn) {
 		return function (results) {
 			return fn.apply(this, results);
 		};
 	};
 
-/**
- * @private
- * @param {Record<string,any>} opts
- * @param {Record<string,any>} overrides
- * @param {boolean} [lowerCase]
- * @returns {Record<string,any>}
- */
+	/**
+	 * @private
+	 * @param {Record<string,any>} opts
+	 * @param {Record<string,any>} overrides
+	 * @param {boolean} [lowerCase]
+	 * @returns {Record<string,any>}
+	 */
 	function deepMerge(opts, overrides, lowerCase) {
 		if (Array.isArray(opts)) {
 			return opts.concat(overrides);
 		}
 		if (overrides && typeof overrides == 'object') {
-			let out = /** @type {Record<string,any>} */({}),
+			let out = /** @type {Record<string,any>} */ ({}),
 				i;
 			if (opts) {
 				for (i in opts) {
@@ -160,6 +161,7 @@ export default (function create(/** @type {Options} */ defaults) {
 			config = url;
 			url = config.url;
 		}
+
 		/**
 		 * @type {Options}
 		 */
@@ -230,15 +232,15 @@ export default (function create(/** @type {Options} */ defaults) {
 		});
 	}
 
- /**
-  * @public
-  * @type {AbortController}
-  */
-  redaxios.CancelToken = /** @type {any} */ (self).AbortController || Object;
+	/**
+	 * @public
+	 * @type {AbortController}
+	 */
+	redaxios.CancelToken = /** @type {any} */ (self).AbortController || Object;
 
- /**
-  * @public
-  */
+	/**
+	 * @public
+	 */
 	redaxios.create = create;
 
 	return redaxios;
