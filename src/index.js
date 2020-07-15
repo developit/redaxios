@@ -19,6 +19,8 @@
  * @property {Headers} [headers] Request headers
  * @property {FormData|string|object} [body] a body, optionally encoded, to send
  * @property {'text'|'json'|'stream'|'blob'|'arrayBuffer'|'formData'|'stream'} [responseType="text"] An encoding to use for the response
+ * @property {Record<string,any>|URLSearchParams} [params] querystring parameters
+ * @property {(params: Options['params']) => string} [paramsSerializer] custom function to stringify querystring parameters
  * @property {boolean} [withCredentials] Send the request with credentials like cookies
  * @property {string} [auth] Authorization header value to send with the request
  * @property {string} [xsrfCookieName] Pass an Cross-site Request Forgery prevention cookie value as a header defined by `xsrfHeaderName`
@@ -78,31 +80,19 @@ export default (function create(/** @type {Options} */ defaults) {
 		return (url, data, config) => redaxios(url, Object.assign({ method, data }, config));
 	}
 
-	/**
-	 * Builds request url based on query string parameters
-	 * @private
-	 * @param {string} url
-	 * @param {object|URLSearchParams} [params]
-	 * @param {function} [serializer]
-	 * @returns {string}
-	 */
-	function buildUrl(url, params, serializer) {
-		if (!params) {
-			return url;
-		}
-
-		let serializedParams;
-		if (serializer) {
-			serializedParams = serializer(params);
-		} else if (params instanceof URLSearchParams) {
-			serializedParams = params.toString();
-		} else {
-			serializedParams = (new URLSearchParams(params)).toString();
-		}
-
-		const divider = url.indexOf('?') === -1 ? '?' : '&';
-		return url + divider + serializedParams;
-	}
+	// /**
+	//  * Builds request url based on query string parameters
+	//  * @private
+	//  * @param {string} url
+	//  * @param {Record<string,string>|URLSearchParams} [params]
+	//  * @param {function} [serializer]
+	//  * @returns {string}
+	//  */
+	// function buildUrl(url, params, serializer) {
+	// 	const serializedParams = serializer ? serializer(params) : new URLSearchParams(params);
+	// 	const divider = ~url.indexOf('?') ? '&' : '?';
+	// 	return url + divider + serializedParams;
+	// }
 
 	/**
 	 * @public
@@ -188,12 +178,21 @@ export default (function create(/** @type {Options} */ defaults) {
 			url = config.url;
 		}
 
+		const userConfig = /** @type {Options} */ (config || {});
+
+		const response = /** @type {Response<any>} */ ({ config: userConfig });
+
 		/**
 		 * @type {Options}
 		 */
-		const options = deepMerge(defaults, config || {});
+		const options = deepMerge(defaults, userConfig);
+
 		let data = options.data;
-		url = buildUrl(url, options.params, options.paramsSerializer);
+
+		/**
+		 * @type {{'Content-Type':'application/json';Authorization: string} & Headers}
+		 */
+		const customHeaders = {};
 
 		if (options.transformRequest) {
 			for (let i = 0; i < options.transformRequest.length; i++) {
@@ -203,12 +202,6 @@ export default (function create(/** @type {Options} */ defaults) {
 				}
 			}
 		}
-
-		const fetchFunc = options.fetch || fetch;
-		/**
-		 * @type {{'Content-Type':'application/json';Authorization: string} & Headers}
-		 */
-		const customHeaders = {};
 
 		if (data && typeof data === 'object' && typeof data.append !== 'function') {
 			data = JSON.stringify(data);
@@ -233,9 +226,15 @@ export default (function create(/** @type {Options} */ defaults) {
 			url = new URL(url, options.baseURL) + '';
 		}
 
-		/** @type {Response<any>} */
-		const response = {};
-		response.config = /** @type {Options} */ (config);
+		if (options.params) {
+			const divider = ~url.indexOf('?') ? '&' : '?';
+			const query = options.paramsSerializer
+				? options.paramsSerializer(options.params)
+				: new URLSearchParams(options.params);
+			url += divider + query;
+		}
+
+		const fetchFunc = options.fetch || fetch;
 
 		return fetchFunc(url, {
 			method: options.method,

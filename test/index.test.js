@@ -176,7 +176,9 @@ describe('redaxios', () => {
 		expect(window.fetch).toHaveBeenCalledTimes(1);
 		expect(window.fetch).toHaveBeenCalledWith('/foo', jasmine.any(Object));
 
-		let params = { a: 1, b: true };
+		let params;
+
+		params = { a: 1, b: true };
 		axios.get('/foo', { params });
 		expect(window.fetch).toHaveBeenCalledTimes(2);
 		expect(window.fetch).toHaveBeenCalledWith('/foo?a=1&b=true', jasmine.any(Object));
@@ -190,7 +192,7 @@ describe('redaxios', () => {
 		expect(window.fetch).toHaveBeenCalledTimes(4);
 		expect(window.fetch).toHaveBeenCalledWith('/foo?d=test', jasmine.any(Object));
 
-		const paramsSerializer = params => 'e=iamthelaw';
+		const paramsSerializer = (params) => 'e=iamthelaw';
 		axios.get('/foo', { params, paramsSerializer });
 		expect(window.fetch).toHaveBeenCalledTimes(5);
 		expect(window.fetch).toHaveBeenCalledWith('/foo?e=iamthelaw', jasmine.any(Object));
