@@ -10,4 +10,3 @@ insert_final_newline = true
 [{*.json,*.md,.*rc,*.yml,*.txt}]
 indent_style = space
 indent_size = 2
-insert_final_newline = false

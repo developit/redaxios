@@ -203,7 +203,7 @@ export default (function create(/** @type {Options} */ defaults) {
 		}
 
 		if (options.baseURL) {
-			url = new URL(url, options.baseURL);
+			url = new URL(url, options.baseURL) + '';
 		}
 
 		/** @type {Response<any>} */
@@ -214,7 +214,7 @@ export default (function create(/** @type {Options} */ defaults) {
 			method: options.method,
 			body: data,
 			headers: deepMerge(options.headers, customHeaders, true),
-			credentials: options.withCredentials && 'include'
+			credentials: options.withCredentials ? 'include' : undefined
 		}).then((res) => {
 			let i;
 			for (i in res) {
