@@ -159,6 +159,7 @@ export default (function create(defaults) {
 			}
 		}
 
+		const fetchFunc = options.fetch || fetch;
 		const customHeaders = {};
 
 		if (data && typeof data === 'object') {
@@ -188,10 +189,11 @@ export default (function create(defaults) {
 		const response = {};
 		response.config = config;
 
-		return fetch(url, {
+		return fetchFunc(url, {
 			method: options.method,
 			body: data,
-			headers: deepMerge(options.headers, customHeaders, true)
+			headers: deepMerge(options.headers, customHeaders, true),
+			credentials: options.withCredentials && 'include'
 		}).then((res) => {
 			let i;
 			for (i in res) {
