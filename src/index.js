@@ -1,5 +1,3 @@
-import Interceptor from './interceptor';
-
 /**
  * Copyright 2018 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,6 +10,8 @@ import Interceptor from './interceptor';
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import Interceptor from './interceptor';
 
 /**
  * @public
@@ -159,19 +159,21 @@ export default (function create(/** @type {Options} */ defaults) {
 			url = config.url;
 		}
 
-		const response = /** @type {Response<any>} */ ({ config });
+		let response = /** @type {Response<any>} */ ({ config });
 
 		/** @type {Options} */
-		const options = deepMerge(defaults, config);
-    
+		let options = deepMerge(defaults, config);
+
 		if (_data) options.data = _data;
 
-		redaxios.interceptors.request.handlers.map(handler => {
+		redaxios.interceptors.request.handlers.map((handler) => {
 			if (handler) {
 				const resultConfig = handler.done(options);
 				options = deepMerge(options, resultConfig || {});
 			}
 		});
+
+		let data = options.data;
 
 		/** @type {Headers} */
 		const customHeaders = {};
@@ -218,28 +220,27 @@ export default (function create(/** @type {Options} */ defaults) {
 
 			const ok = options.validateStatus ? options.validateStatus(res.status) : res.ok;
 			if (!ok) {
-				redaxios.interceptors.response.handlers.map(handler => {
+				redaxios.interceptors.response.handlers.map((handler) => {
 					if (handler && handler.error) {
 						handler.error(res);
 					}
 				});
-        const error = Promise.reject(response);
-				redaxios.interceptors.request.handlers.map(handler => {
+				const error = Promise.reject(response);
+				redaxios.interceptors.request.handlers.map((handler) => {
 					if (handler && handler.error) {
 						handler.error(error);
-      	  }
+					}
 				});
 				return error;
 			}
 
-			const withData = options.responseType === 'stream'
-				? Promise.resolve(res.body)
-				: res[options.responseType || 'text']();
+			const withData =
+				options.responseType === 'stream' ? Promise.resolve(res.body) : res[options.responseType || 'text']();
 			return withData.then((data) => {
 				response.data = data;
-				redaxios.interceptors.response.handlers.map(handler => {
-					response = handler && handler.done(response) || response;
-        });
+				redaxios.interceptors.response.handlers.map((handler) => {
+					response = (handler && handler.done(response)) || response;
+				});
 				return response;
 			});
 		});
