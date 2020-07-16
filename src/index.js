@@ -17,15 +17,21 @@ import Interceptor from './interceptor';
  * @public
  * @typedef Options
  * @property {string} [url] the URL to request
- * @property {string} [method="get"] HTTP method, case-insensitive
+ * @property {'get'|'post'|'put'|'patch'|'delete'|'options'|'head'|'GET'|'POST'|'PUT'|'PATCH'|'DELETE'|'OPTIONS'|'HEAD'} [method="get"] HTTP method, case-insensitive
  * @property {Headers} [headers] Request headers
  * @property {FormData|string|object} [body] a body, optionally encoded, to send
  * @property {'text'|'json'|'stream'|'blob'|'arrayBuffer'|'formData'|'stream'} [responseType="text"] An encoding to use for the response
+ * @property {Record<string,any>|URLSearchParams} [params] querystring parameters
+ * @property {(params: Options['params']) => string} [paramsSerializer] custom function to stringify querystring parameters
+ * @property {boolean} [withCredentials] Send the request with credentials like cookies
  * @property {string} [auth] Authorization header value to send with the request
  * @property {string} [xsrfCookieName] Pass an Cross-site Request Forgery prevention cookie value as a header defined by `xsrfHeaderName`
  * @property {string} [xsrfHeaderName] The name of a header to use for passing XSRF cookies
  * @property {(status: number) => boolean} [validateStatus] Override status code handling (default: 200-399 is a success)
  * @property {Array<(body: any, headers: Headers) => any?>} [transformRequest] An array of transformations to apply to the outgoing request
+ * @property {string} [baseURL] a base URL from which to resolve all URLs
+ * @property {typeof window.fetch} [fetch] Custom window.fetch implementation
+ * @property {any} [data]
  */
 
 /**
@@ -36,68 +42,75 @@ import Interceptor from './interceptor';
 
 /**
  * @public
+ * @template T
  * @typedef Response
+ * @property {number} status
+ * @property {string} statusText
  * @property {Options} config the request configuration
- * @property {any} data the decoded response body
+ * @property {T} data the decoded response body
+ * @property {Headers} headers
+ * @property {boolean} redirect
+ * @property {string} url
+ * @property {ResponseType} type
+ * @property {ReadableStream<Uint8Array> | null} body
+ * @property {boolean} bodyUsed
+ */
+
+/**
+ * @typedef BodylessMethod
+ * @type {<T=any>(url: string, config?: Options) => Promise<Response<T>>}
+ */
+
+/**
+ * @typedef BodyMethod
+ * @type {<T=any>(url: string, body?: any, config?: Options) => Promise<Response<T>>}
  */
 
 /** */
-export default (function create(defaults) {
+export default (function create(/** @type {Options} */ defaults) {
 	defaults = defaults || {};
 
 	/**
-	 * Creates a request factory bound to the given HTTP method.
-	 * @private
-	 * @param {string} method
-	 * @returns {(url: string, config?: Options) => Promise<Response>}
-	 */
-	function createBodylessMethod(method) {
-		return (url, config) => redaxios(url, Object.assign({ method }, config));
-	}
-
-	/**
-	 * Creates a request factory bound to the given HTTP method.
-	 * @private
-	 * @param {string} method
-	 * @returns {(url: string, body?: any, config?: Options) => Promise<Response>}
-	 */
-	function createBodyMethod(method) {
-		return (url, data, config) => redaxios(url, Object.assign({ method, data }, config));
-	}
-
-	/**
 	 * @public
-	 * @type {((config?: Options) => Promise<Response>) | ((url: string, config?: Options) => Promise<Response>)}
+	 * @template T
+	 * @type {(<T = any>(config?: Options) => Promise<Response<T>>) | (<T = any>(url: string, config?: Options) => Promise<Response<T>>)}
 	 */
 	redaxios.request = redaxios;
 
-	/** @public */
-	redaxios.get = createBodylessMethod('get');
+	/** @public @type {BodylessMethod} */
+	redaxios.get = (url, config) => redaxios(url, config, 'get');
 
-	/** @public */
-	redaxios.delete = createBodylessMethod('delete');
+	/** @public @type {BodylessMethod} */
+	redaxios.delete = (url, config) => redaxios(url, config, 'delete');
 
-	/** @public */
-	redaxios.options = createBodylessMethod('options');
+	/** @public @type {BodylessMethod} */
+	redaxios.options = (url, config) => redaxios(url, config, 'options');
 
-	/** @public */
-	redaxios.post = createBodyMethod('post');
+	/** @public @type {BodyMethod} */
+	redaxios.post = (url, data, config) => redaxios(url, config, 'post', data);
 
-	/** @public */
-	redaxios.put = createBodyMethod('put');
+	/** @public @type {BodyMethod} */
+	redaxios.put = (url, data, config) => redaxios(url, config, 'put', data);
 
-	/** @public */
-	redaxios.patch = createBodyMethod('patch');
+	/** @public @type {BodyMethod} */
+	redaxios.patch = (url, data, config) => redaxios(url, config, 'patch', data);
 
 	/** @public */
 	redaxios.all = Promise.all;
 
-	/** @public */
+	/**
+	 * @public
+	 * @template T,R
+	 * @param {(...args: T[]) => R} fn
+	 * @returns {(array: T[]) => R}
+	 */
 	redaxios.spread = function (fn) {
 		return function (results) {
 			return fn.apply(this, results);
 		};
 	};
+	// 3b smaller:
+	// redaxios.spread = (fn) => /** @type {any} */ (fn.apply.bind(fn, fn));
 
 	/** @public */
 	redaxios.interceptors = {
@@ -105,150 +118,142 @@ export default (function create(defaults) {
 		response: new Interceptor()
 	};
 
+	/**
+	 * @private
+	 * @param {Record<string,any>} opts
+	 * @param {Record<string,any>} [overrides]
+	 * @param {boolean} [lowerCase]
+	 * @returns {Partial<opts>}
+	 */
 	function deepMerge(opts, overrides, lowerCase) {
+		let out = {},
+			i;
 		if (Array.isArray(opts)) {
 			return opts.concat(overrides);
 		}
-		if (overrides && typeof overrides == 'object') {
-			let out = {}, i;
-			if (opts) {
-				for (i in opts) {
-					let key = lowerCase ? i.toLowerCase() : i;
-					out[key] = opts[i];
-				}
-			}
-			for (i in overrides) {
-				let key = lowerCase ? i.toLowerCase() : i;
-				if (key === 'headers') lowerCase = true;
-				out[key] = i in out ? deepMerge(out[key], overrides[i], lowerCase) : overrides[i];
-			}
-			return out;
+		for (i in opts) {
+			const key = lowerCase ? i.toLowerCase() : i;
+			out[key] = opts[i];
 		}
-		return overrides;
+		for (i in overrides) {
+			const key = lowerCase ? i.toLowerCase() : i;
+			const value = /** @type {any} */ (overrides)[i];
+			out[key] = key in out && typeof value == 'object' ? deepMerge(out[key], value, key === 'headers') : value;
+		}
+		return out;
 	}
 
 	/**
 	 * Issues a request.
 	 * @public
-	 * @param {string} [url]
+	 * @template T
+	 * @param {string | Options} url
 	 * @param {Options} [config]
-	 * @returns {Promise<Response>}
+	 * @param {any} [_method]
+	 * @param {any} [_data]
+	 * @returns {Promise<Response<T>>}
 	 */
-	function redaxios(url, config) {
+	function redaxios(url, config, _method, _data) {
 		if (typeof url !== 'string') {
 			config = url;
 			url = config.url;
 		}
 
-		// pre-request interception
-		let options = deepMerge(defaults, config || {});
-		if (redaxios.interceptors.request.handlers.length > 0) {
-			redaxios.interceptors.request.handlers.forEach(handler => {
-				if (handler !== null) {
-					const resultConfig = handler.done(config);
-					options = deepMerge(options, resultConfig || {});
-				}
-			});
-		}
+		const response = /** @type {Response<any>} */ ({ config });
 
-		let data = options.data;
+		/** @type {Options} */
+		const options = deepMerge(defaults, config);
+    
+		if (_data) options.data = _data;
 
-		if (options.transformRequest) {
-			for (let i = 0; i < options.transformRequest.length; i++) {
-				let r = options.transformRequest[i](data, options.headers);
-				if (r !== undefined) {
-					data = r;
-				}
+		redaxios.interceptors.request.handlers.map(handler => {
+			if (handler) {
+				const resultConfig = handler.done(options);
+				options = deepMerge(options, resultConfig || {});
 			}
-		}
-		
-		const fetchFunc = options.fetch || fetch;
+		});
+
+		/** @type {Headers} */
 		const customHeaders = {};
 
-		if (data && typeof data === 'object') {
+		(options.transformRequest || []).map((f) => {
+			data = f(data, options.headers) || data;
+		});
+
+		if (data && typeof data === 'object' && typeof data.append !== 'function') {
 			data = JSON.stringify(data);
-			customHeaders['Content-Type'] = 'application/json';
+			customHeaders['content-type'] = 'application/json';
 		}
 
-		if (options.xsrfCookieName) {
-			let parts = document.cookie.split(/ *[;=] */);
-			for (let i = 0; i < parts.length; i += 2) {
-				if (parts[i] == options.xsrfCookieName) {
-					customHeaders[options.xsrfHeaderName] = decodeURIComponent(parts[i + 1]);
-					break;
-				}
-			}
-		}
+		const m = document.cookie.match(RegExp('(^|; )' + options.xsrfCookieName + '=([^;]*)'));
+		if (m) customHeaders[options.xsrfHeaderName] = m[2];
 
 		if (options.auth) {
-			customHeaders.Authorization = options.auth;
+			customHeaders.authorization = options.auth;
 		}
 
-		/** @type {Response} */
-		let response = {};
-		response.config = config;
+		if (options.baseURL) {
+			url = new URL(url, options.baseURL) + '';
+		}
+
+		if (options.params) {
+			const divider = ~url.indexOf('?') ? '&' : '?';
+			const query = options.paramsSerializer
+				? options.paramsSerializer(options.params)
+				: new URLSearchParams(options.params);
+			url += divider + query;
+		}
+
+		const fetchFunc = options.fetch || fetch;
 
 		return fetchFunc(url, {
-			method: options.method,
+			method: _method || options.method,
 			body: data,
-			headers: deepMerge(options.headers, customHeaders, true)
+			headers: deepMerge(options.headers, customHeaders, true),
+			credentials: options.withCredentials ? 'include' : undefined
 		}).then((res) => {
-			let i;
-			for (i in res) {
+			for (const i in res) {
 				if (typeof res[i] != 'function') response[i] = res[i];
 			}
 
-			// response error interception
-			if (!(res.status >= 200 && res.status < 300)
-				&& redaxios.interceptors.response.handlers.length > 0) {
-				redaxios.interceptors.response.handlers.forEach(handler => {
-					if (handler && handler.error)
+			const ok = options.validateStatus ? options.validateStatus(res.status) : res.ok;
+			if (!ok) {
+				redaxios.interceptors.response.handlers.map(handler => {
+					if (handler && handler.error) {
 						handler.error(res);
+					}
 				});
+        const error = Promise.reject(response);
+				redaxios.interceptors.request.handlers.map(handler => {
+					if (handler && handler.error) {
+						handler.error(error);
+      	  }
+				});
+				return error;
 			}
 
-			if (!(options.validateStatus ? options.validateStatus(res.status) : res.ok)) {
-				return Promise.reject(res);
-			}
 			const withData = options.responseType === 'stream'
 				? Promise.resolve(res.body)
 				: res[options.responseType || 'text']();
-
 			return withData.then((data) => {
-				// post-response interception 200 status code
-				if (res.status >= 200 && res.status < 300
-					&& redaxios.interceptors.response.handlers.length > 0) {
-					response.data = data;
-					redaxios.interceptors.response.handlers.forEach(handler => {
-						if (handler !== null) {
-							const interceptedResponse = handler.done(response);
-
-							if (interceptedResponse)
-								response = interceptedResponse;
-						}
-					});
-				}
-				else {
-					response.data = data;
-				}
-				
+				response.data = data;
+				redaxios.interceptors.response.handlers.map(handler => {
+					response = handler && handler.done(response) || response;
+        });
 				return response;
 			});
-		}).catch(error => {
-			// request error interception
-			if (redaxios.interceptors.request.handlers.length > 0) {
-				redaxios.interceptors.request.handlers.forEach(handler => {
-					if (handler && handler.error)
-						handler.error(error);
-				});
-			}
-
-			throw error;
 		});
 	}
 
-	redaxios.CancelToken = self.AbortController || Object;
+	/**
+	 * @public
+	 * @type {AbortController}
+	 */
+	redaxios.CancelToken = /** @type {any} */ (typeof AbortController == 'function' ? AbortController : Object);
 
+	/**
+	 * @public
+	 */
 	redaxios.create = create;
 
 	return redaxios;
