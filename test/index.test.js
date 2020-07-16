@@ -76,6 +76,59 @@ describe('redaxios', () => {
 		}
 	});
 
+	it('should merge headers case-insensitively', async () => {
+		const oldFetch = window.fetch;
+		try {
+			const fetch = (window.fetch = jasmine.createSpy('fetch').and.returnValue(
+				Promise.resolve({
+					ok: true,
+					status: 200,
+					text: () => Promise.resolve('yep')
+				})
+			));
+			await axios('/', { headers: { 'x-foo': '2' } });
+			expect(fetch.calls.first().args[1].headers).toEqual({
+				'x-foo': '2'
+			});
+
+			fetch.calls.reset();
+
+			await axios('/', { headers: { 'x-foo': '2', 'X-Foo': '4' } });
+			expect(fetch.calls.first().args[1].headers).toEqual({
+				'x-foo': '4'
+			});
+
+			fetch.calls.reset();
+
+			const request = axios.create({
+				headers: {
+					'Base-Upper': 'base',
+					'base-lower': 'base'
+				}
+			});
+			await request('/');
+			expect(fetch.calls.first().args[1].headers).toEqual({
+				'base-upper': 'base',
+				'base-lower': 'base'
+			});
+
+			fetch.calls.reset();
+
+			await request('/', {
+				headers: {
+					'base-upper': 'replaced',
+					'BASE-LOWER': 'replaced'
+				}
+			});
+			expect(fetch.calls.first().args[1].headers).toEqual({
+				'base-upper': 'replaced',
+				'base-lower': 'replaced'
+			});
+		} finally {
+			window.fetch = oldFetch;
+		}
+	});
+
 	it('should issue POST requests', async () => {
 		const oldFetch = window.fetch;
 		try {
