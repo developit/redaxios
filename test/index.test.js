@@ -98,6 +98,31 @@ describe('redaxios', () => {
 				window.fetch = oldFetch;
 			}
 		});
+
+		it('should resolve URLs with a relative baseURL', async () => {
+			const oldFetch = window.fetch;
+			try {
+				window.fetch = jasmine
+					.createSpy('fetch')
+					.and.returnValue(Promise.resolve({ ok: true, status: 200, text: () => Promise.resolve('') }));
+				const req = axios.get('/bar', {
+					baseURL: '/foo'
+				});
+				expect(window.fetch).toHaveBeenCalledTimes(1);
+				expect(window.fetch).toHaveBeenCalledWith(
+					'/foo/bar',
+					jasmine.objectContaining({
+						method: 'get',
+						headers: {},
+						body: undefined
+					})
+				);
+				const res = await req;
+				expect(res.status).toEqual(200);
+			} finally {
+				window.fetch = oldFetch;
+			}
+		});
 	});
 
 	describe('options.headers', () => {

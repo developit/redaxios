@@ -178,7 +178,7 @@ export default (function create(/** @type {Options} */ defaults) {
 		}
 
 		if (options.baseURL) {
-			url = new URL(url, options.baseURL) + '';
+			url = options.baseURL + url;
 		}
 
 		if (options.params) {
