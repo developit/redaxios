@@ -40,15 +40,33 @@ describe('redaxios', () => {
 		expect(res.data).toEqual('some example content');
 	});
 
-	it('should request JSON', async () => {
-		const req = axios.get(jsonExample, {
-			responseType: 'json'
+	describe('responseType', () => {
+		it('should default to JSON', async () => {
+			const res = await axios.get(jsonExample);
+			expect(res.data).toEqual({ hello: 'world' });
 		});
-		expect(req).toBeInstanceOf(Promise);
-		const res = await req;
-		expect(res).toBeInstanceOf(Object);
-		expect(res.status).toEqual(200);
-		expect(res.data).toEqual({ hello: 'world' });
+
+		it('should force JSON for responseType:json', async () => {
+			const res = await axios.get(jsonExample, {
+				responseType: 'json'
+			});
+			expect(res.data).toEqual({ hello: 'world' });
+		});
+
+		it('should fall back to null for failed JSON parse', async () => {
+			const res = await axios.get(textExample, {
+				responseType: 'json'
+			});
+			expect(res.data).toEqual(undefined);
+		});
+
+		it('should still parse JSON when responseType:text', async () => {
+			// this is just how axios works
+			const res = await axios.get(jsonExample, {
+				responseType: 'text'
+			});
+			expect(res.data).toEqual({ hello: 'world' });
+		});
 	});
 
 	it('response should be parsed json', async () => {
@@ -227,7 +245,7 @@ describe('redaxios', () => {
 		const res = await req;
 		expect(res).toBeInstanceOf(Object);
 		expect(res.status).toEqual(200);
-		expect(JSON.parse(res.data)).toEqual({ hello: 'world' });
+		expect(res.data).toEqual({ hello: 'world' });
 	});
 
 	it('should support params and paramsSerializer options', async () => {

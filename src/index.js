@@ -18,7 +18,7 @@
  * @property {'get'|'post'|'put'|'patch'|'delete'|'options'|'head'|'GET'|'POST'|'PUT'|'PATCH'|'DELETE'|'OPTIONS'|'HEAD'} [method="get"] HTTP method, case-insensitive
  * @property {Headers} [headers] Request headers
  * @property {FormData|string|object} [body] a body, optionally encoded, to send
- * @property {'text'|'json'|'stream'|'blob'|'arrayBuffer'|'formData'|'stream'} [responseType="text"] An encoding to use for the response
+ * @property {'text'|'json'|'stream'|'blob'|'arrayBuffer'|'formData'|'stream'} [responseType="json"] An encoding to use for the response
  * @property {Record<string,any>|URLSearchParams} [params] querystring parameters
  * @property {(params: Options['params']) => string} [paramsSerializer] custom function to stringify querystring parameters
  * @property {boolean} [withCredentials] Send the request with credentials like cookies
@@ -136,19 +136,6 @@ export default (function create(/** @type {Options} */ defaults) {
 	}
 
 	/**
-	 * @private
-	 */
-	function transformResponse(data) {
-		if (typeof data === 'string') {
-			try {
-				data = JSON.parse(data);
-			}
-			catch (e) {}
-		}
-		return data;
-	}
-
-	/**
 	 * Issues a request.
 	 * @public
 	 * @template T
@@ -221,10 +208,15 @@ export default (function create(/** @type {Options} */ defaults) {
 				response.data = res.body;
 				return response;
 			}
-			return res[options.responseType || 'text']().then((data) => {
-				response.data = transformResponse(data);
-				return response;
-			});
+
+			return res[options.responseType || 'text']()
+				.then((data) => {
+					response.data = data;
+					// its okay if this fails: response.data will be the unparsed value:
+					response.data = JSON.parse(data);
+				})
+				.catch(Object)
+				.then(() => response);
 		});
 	}
 
@@ -233,6 +225,12 @@ export default (function create(/** @type {Options} */ defaults) {
 	 * @type {AbortController}
 	 */
 	redaxios.CancelToken = /** @type {any} */ (typeof AbortController == 'function' ? AbortController : Object);
+
+	/**
+	 * @public
+	 * @type {Options}
+	 */
+	redaxios.defaults = defaults;
 
 	/**
 	 * @public
