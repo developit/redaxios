@@ -27,6 +27,7 @@
  * @property {string} [xsrfHeaderName] The name of a header to use for passing XSRF cookies
  * @property {(status: number) => boolean} [validateStatus] Override status code handling (default: 200-399 is a success)
  * @property {Array<(body: any, headers: Headers) => any?>} [transformRequest] An array of transformations to apply to the outgoing request
+ * @property {Array<(data: any) => any?>} [transformResponse] An array of transformations to apply to response data
  * @property {string} [baseURL] a base URL from which to resolve all URLs
  * @property {typeof window.fetch} [fetch] Custom window.fetch implementation
  * @property {any} [data]
@@ -102,13 +103,7 @@ export default (function create(/** @type {Options} */ defaults) {
 	 * @param {(...args: T[]) => R} fn
 	 * @returns {(array: T[]) => R}
 	 */
-	redaxios.spread = function (fn) {
-		return function (results) {
-			return fn.apply(this, results);
-		};
-	};
-	// 3b smaller:
-	// redaxios.spread = (fn) => /** @type {any} */ (fn.apply.bind(fn, fn));
+	redaxios.spread = (fn) => /** @type {any} */ (fn.apply.bind(fn, fn));
 
 	/**
 	 * @private
@@ -146,7 +141,7 @@ export default (function create(/** @type {Options} */ defaults) {
 	 * @returns {Promise<Response<T>>}
 	 */
 	function redaxios(url, config, _method, _data) {
-		if (typeof url !== 'string') {
+		if (typeof url != 'string') {
 			config = url;
 			url = config.url;
 		}
@@ -159,13 +154,11 @@ export default (function create(/** @type {Options} */ defaults) {
 		/** @type {Headers} */
 		const customHeaders = {};
 
-		let data = _data || options.data;
+		let data = (options.transformRequest || []).reduce((data, f) => {
+			return f(data, options.headers) || data;
+		}, _data || options.data);
 
-		(options.transformRequest || []).map((f) => {
-			data = f(data, options.headers) || data;
-		});
-
-		if (data && typeof data === 'object' && typeof data.append !== 'function') {
+		if (data && typeof data == 'object' && typeof data.append != 'function') {
 			data = JSON.stringify(data);
 			customHeaders['content-type'] = 'application/json';
 		}
@@ -196,35 +189,36 @@ export default (function create(/** @type {Options} */ defaults) {
 			body: data,
 			headers: deepMerge(options.headers, customHeaders, true),
 			credentials: options.withCredentials ? 'include' : undefined
-		}).then((res) => {
-			for (const i in res) {
-				if (typeof res[i] != 'function') response[i] = res[i];
-			}
+		})
+			.then((res) => {
+				for (const i in res) {
+					if (typeof res[i] != 'function') response[i] = res[i];
+				}
 
-			const ok = options.validateStatus ? options.validateStatus(res.status) : res.ok;
-			if (!ok) return Promise.reject(response);
+				const ok = options.validateStatus ? options.validateStatus(res.status) : res.ok;
+				if (!ok) throw response;
 
-			if (options.responseType == 'stream') {
-				response.data = res.body;
+				try {
+					return res[options.responseType || 'text']();
+				} catch (e) {}
+				return res.body;
+			})
+			.then((data) => {
+				try {
+					data = JSON.parse(data);
+				} catch (e) {}
+				response.data = (options.transformResponse || []).reduce((data, f) => {
+					return f(data) || data;
+				}, data);
 				return response;
-			}
-
-			return res[options.responseType || 'text']()
-				.then((data) => {
-					response.data = data;
-					// its okay if this fails: response.data will be the unparsed value:
-					response.data = JSON.parse(data);
-				})
-				.catch(Object)
-				.then(() => response);
-		});
+			});
 	}
 
 	/**
 	 * @public
 	 * @type {AbortController}
 	 */
-	redaxios.CancelToken = /** @type {any} */ (typeof AbortController == 'function' ? AbortController : Object);
+	redaxios.CancelToken = /** @type {any} */ (typeof AbortController != 'function' ? Object : AbortController);
 
 	/**
 	 * @public
