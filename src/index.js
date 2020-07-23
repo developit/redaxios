@@ -125,7 +125,7 @@ export default (function create(/** @type {Options} */ defaults) {
 		for (i in overrides) {
 			const key = lowerCase ? i.toLowerCase() : i;
 			const value = /** @type {any} */ (overrides)[i];
-			out[key] = key in out && typeof value == 'object' ? deepMerge(out[key], value, key === 'headers') : value;
+			out[key] = key in out && typeof value == 'object' ? deepMerge(out[key], value, key == 'headers') : value;
 		}
 		return out;
 	}
@@ -190,7 +190,7 @@ export default (function create(/** @type {Options} */ defaults) {
 			headers: deepMerge(options.headers, customHeaders, true),
 			credentials: options.withCredentials ? 'include' : undefined
 		})
-			.then((res) => {
+			.then((/**@type {globalThis.Response}*/ res, raw) => {
 				for (const i in res) {
 					if (typeof res[i] != 'function') response[i] = res[i];
 				}
@@ -198,18 +198,15 @@ export default (function create(/** @type {Options} */ defaults) {
 				const ok = options.validateStatus ? options.validateStatus(res.status) : res.ok;
 				if (!ok) throw response;
 
-				try {
-					return res[options.responseType || 'text']();
-				} catch (e) {}
-				return res.body;
+				if (!res[options.responseType || 'text']) {
+					return res.body;
+				}
+
+				raw = res[options.responseType || 'text']().catch(() => undefined);
+				return raw.then(JSON.parse).catch(() => raw);
 			})
 			.then((data) => {
-				try {
-					data = JSON.parse(data);
-				} catch (e) {}
-				response.data = (options.transformResponse || []).reduce((data, f) => {
-					return f(data) || data;
-				}, data);
+				response.data = (options.transformResponse || []).reduce((data, f) => f(data) || data, data);
 				return response;
 			});
 	}
