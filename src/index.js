@@ -20,7 +20,7 @@ import Interceptor from './interceptor';
  * @property {'get'|'post'|'put'|'patch'|'delete'|'options'|'head'|'GET'|'POST'|'PUT'|'PATCH'|'DELETE'|'OPTIONS'|'HEAD'} [method="get"] HTTP method, case-insensitive
  * @property {Headers} [headers] Request headers
  * @property {FormData|string|object} [body] a body, optionally encoded, to send
- * @property {'text'|'json'|'stream'|'blob'|'arrayBuffer'|'formData'|'stream'} [responseType="text"] An encoding to use for the response
+ * @property {'text'|'json'|'stream'|'blob'|'arrayBuffer'|'formData'|'stream'} [responseType="json"] An encoding to use for the response
  * @property {Record<string,any>|URLSearchParams} [params] querystring parameters
  * @property {(params: Options['params']) => string} [paramsSerializer] custom function to stringify querystring parameters
  * @property {boolean} [withCredentials] Send the request with credentials like cookies
@@ -234,15 +234,18 @@ export default (function create(/** @type {Options} */ defaults) {
 				return error;
 			}
 
-			const withData =
-				options.responseType === 'stream' ? Promise.resolve(res.body) : res[options.responseType || 'text']();
-			return withData.then((data) => {
-				response.data = data;
-				redaxios.interceptors.response.handlers.map((handler) => {
-					response = (handler && handler.done(response)) || response;
-				});
-				return response;
-			});
+			return res[options.responseType || 'text']()
+				.then((data) => {
+					response.data = data;
+					try {
+						response.data = JSON.parse(data);
+          }
+					catch (e) {}
+					redaxios.interceptors.response.handlers.map((handler) => {
+						response = (handler && handler.done(response)) || response;
+					});
+					return response;
+				})
 		});
 	}
 
@@ -251,6 +254,12 @@ export default (function create(/** @type {Options} */ defaults) {
 	 * @type {AbortController}
 	 */
 	redaxios.CancelToken = /** @type {any} */ (typeof AbortController == 'function' ? AbortController : Object);
+
+	/**
+	 * @public
+	 * @type {Options}
+	 */
+	redaxios.defaults = defaults;
 
 	/**
 	 * @public

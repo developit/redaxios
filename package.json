@@ -1,6 +1,6 @@
 {
   "name": "redaxios",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "The API from Axios, as a tiny abstraction over Fetch.",
   "source": "src/index.js",
   "main": "dist/redaxios.js",
@@ -56,15 +56,15 @@
   "devDependencies": {
     "@types/jest": "^26.0.4",
     "core-js": "2.6.11",
-    "eslint": "^6.8.0",
-    "eslint-config-developit": "^1.1.1",
+    "eslint": "^7.5.0",
+    "eslint-config-developit": "^1.2.0",
     "eslint-config-prettier": "6.11.0",
     "file-loader": "^5.0.2",
     "isomorphic-fetch": "^2.2.1",
     "karmatic": "^2.1.0",
     "microbundle": "^0.11.0",
+    "npm-merge-driver-install": "^1.1.1",
     "prettier": "2.0.5",
-    "sinon": "^8.0.4",
     "typescript": "3.9.3",
     "webpack": "^4.41.5"
   }
