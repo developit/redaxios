@@ -29,6 +29,7 @@
  * @property {Array<(body: any, headers: Headers) => any?>} [transformRequest] An array of transformations to apply to the outgoing request
  * @property {string} [baseURL] a base URL from which to resolve all URLs
  * @property {typeof window.fetch} [fetch] Custom window.fetch implementation
+ * @property {AbortSignal} [signal] Signal returned by AbortController
  * @property {any} [data]
  */
 
@@ -195,7 +196,8 @@ export default (function create(/** @type {Options} */ defaults) {
 			method: _method || options.method,
 			body: data,
 			headers: deepMerge(options.headers, customHeaders, true),
-			credentials: options.withCredentials ? 'include' : undefined
+			credentials: options.withCredentials ? 'include' : undefined,
+			signal: options.signal
 		}).then((res) => {
 			for (const i in res) {
 				if (typeof res[i] != 'function') response[i] = res[i];

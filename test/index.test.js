@@ -273,4 +273,23 @@ describe('redaxios', () => {
 			expect(fetchMock).toHaveBeenCalledWith('/foo?e=iamthelaw', jasmine.any(Object));
 		});
 	});
+
+	describe('options.signal', () => {
+		it('should cancel a request when signal is passed', async () => {
+			const cancelToken = new axios.CancelToken();
+
+			const axiosGet = axios.get(jsonExample, {
+				signal: cancelToken.signal
+			});
+			cancelToken.abort();
+
+			const spy = jasmine.createSpy();
+			await axiosGet.catch(spy);
+
+			expect(spy).toHaveBeenCalledTimes(1);
+			expect(spy).toHaveBeenCalledWith(
+				jasmine.objectContaining({ code: 20, message: 'The user aborted a request.', name: 'AbortError' })
+			);
+		});
+	});
 });
