@@ -275,13 +275,14 @@ describe('redaxios', () => {
 	});
 
 	describe('options.signal', () => {
-		it('should cancel a request when signal is passed', async () => {
-			const cancelToken = new axios.CancelToken();
+		it('should cancel a request when cancelToken is passed as source.token', async () => {
+			const CancelToken = axios.CancelToken;
+			const source = CancelToken.source();
 
 			const axiosGet = axios.get(jsonExample, {
-				signal: cancelToken.signal
+				cancelToken: source.token
 			});
-			cancelToken.abort();
+			source.cancel();
 
 			const spy = jasmine.createSpy();
 			await axiosGet.catch(spy);
@@ -290,6 +291,33 @@ describe('redaxios', () => {
 			expect(spy).toHaveBeenCalledWith(
 				jasmine.objectContaining({ code: 20, message: 'The user aborted a request.', name: 'AbortError' })
 			);
+		});
+
+		it('should cancel a request when cancelToken is passed as instance CreateToken', async () => {
+			const CancelToken = axios.CancelToken;
+			let cancel;
+
+			const axiosGet = axios.get(jsonExample, {
+				cancelToken: new CancelToken(function executor(c) {
+					cancel = c;
+				})
+			});
+
+			cancel();
+
+			const spy = jasmine.createSpy();
+			await axiosGet.catch(spy);
+
+			expect(spy).toHaveBeenCalledTimes(1);
+			expect(spy).toHaveBeenCalledWith(
+				jasmine.objectContaining({ code: 20, message: 'The user aborted a request.', name: 'AbortError' })
+			);
+		});
+
+		it('should throw TypeError if no executor function is passed to CancelToken constructor', () => {
+			const CancelToken = axios.CancelToken;
+
+			expect(() => new CancelToken()).toThrowError('executor must be a function.');
 		});
 	});
 });

@@ -29,7 +29,7 @@
  * @property {Array<(body: any, headers: Headers) => any?>} [transformRequest] An array of transformations to apply to the outgoing request
  * @property {string} [baseURL] a base URL from which to resolve all URLs
  * @property {typeof window.fetch} [fetch] Custom window.fetch implementation
- * @property {AbortSignal} [signal] Signal returned by AbortController
+ * @property {AbortSignal} [cancelToken] signal returned by AbortController
  * @property {any} [data]
  */
 
@@ -63,6 +63,11 @@
 /**
  * @typedef BodyMethod
  * @type {<T=any>(url: string, body?: any, config?: Options) => Promise<Response<T>>}
+ */
+
+/**
+ * @typedef CancelTokenSourceMethod
+ * @type {() => { token: AbortSignal, cancel: () => void }}
  */
 
 /** */
@@ -137,6 +142,37 @@ export default (function create(/** @type {Options} */ defaults) {
 	}
 
 	/**
+	 * CancelToken
+	 * @private
+	 * @param {Function} executor
+	 * @returns {AbortSignal}
+	 */
+	function CancelToken(executor) {
+		if (typeof executor !== 'function') {
+			throw new TypeError('executor must be a function.');
+		}
+
+		const ac = new AbortController();
+		executor(() => ac.abort());
+
+		return ac.signal;
+	}
+
+	/**
+	 * @public
+	 * @type {CancelTokenSourceMethod}
+	 * @returns
+	 */
+	CancelToken.source = () => {
+		const ac = new AbortController();
+
+		return {
+			token: ac.signal,
+			cancel: () => ac.abort()
+		};
+	};
+
+	/**
 	 * Issues a request.
 	 * @public
 	 * @template T
@@ -197,7 +233,7 @@ export default (function create(/** @type {Options} */ defaults) {
 			body: data,
 			headers: deepMerge(options.headers, customHeaders, true),
 			credentials: options.withCredentials ? 'include' : undefined,
-			signal: options.signal
+			signal: options.cancelToken
 		}).then((res) => {
 			for (const i in res) {
 				if (typeof res[i] != 'function') response[i] = res[i];
@@ -224,9 +260,9 @@ export default (function create(/** @type {Options} */ defaults) {
 
 	/**
 	 * @public
-	 * @type {AbortController}
+	 * @type {Function}
 	 */
-	redaxios.CancelToken = /** @type {any} */ (typeof AbortController == 'function' ? AbortController : Object);
+	redaxios.CancelToken = CancelToken;
 
 	/**
 	 * @public
