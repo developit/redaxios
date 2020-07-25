@@ -153,9 +153,11 @@ export default (function create(/** @type {Options} */ defaults) {
 		}
 
 		const ac = new AbortController();
-		executor(() => ac.abort());
+		const { signal, abort } = ac;
 
-		return ac.signal;
+		executor(abort.bind(ac));
+
+		return signal;
 	}
 
 	/**
@@ -165,10 +167,11 @@ export default (function create(/** @type {Options} */ defaults) {
 	 */
 	CancelToken.source = () => {
 		const ac = new AbortController();
+		const { signal: token, abort } = ac;
 
 		return {
-			token: ac.signal,
-			cancel: () => ac.abort()
+			token,
+			cancel: abort.bind(ac)
 		};
 	};
 
