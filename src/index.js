@@ -66,6 +66,11 @@
  */
 
 /**
+ * @typedef CancelToken
+ * @type {{ (executor: Function): AbortSignal; source(): { token: AbortSignal; cancel: () => void; }; }}
+ */
+
+/**
  * @typedef CancelTokenSourceMethod
  * @type {() => { token: AbortSignal, cancel: () => void }}
  */
@@ -160,7 +165,7 @@ export default (function create(/** @type {Options} */ defaults) {
 	}
 
 	/**
-	 * @public
+	 * @private
 	 * @type {CancelTokenSourceMethod}
 	 * @returns
 	 */
@@ -261,7 +266,7 @@ export default (function create(/** @type {Options} */ defaults) {
 
 	/**
 	 * @public
-	 * @type {Function}
+	 * @type {CancelToken}
 	 */
 	redaxios.CancelToken = CancelToken;
 
