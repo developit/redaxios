@@ -274,7 +274,7 @@ describe('redaxios', () => {
 		});
 	});
 
-	describe('options.signal', () => {
+	describe('Request cancellation using options.cancelToken', () => {
 		it('should cancel a request when cancelToken is passed as source.token', async () => {
 			const CancelToken = axios.CancelToken;
 			const source = CancelToken.source();
