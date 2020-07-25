@@ -272,6 +272,13 @@ export default (function create(/** @type {Options} */ defaults) {
 
 	/**
 	 * @public
+	 * @param {DOMError} e
+	 * @returns {boolean}
+	 */
+	redaxios.isCancel = (e) => e.name === 'AbortError';
+
+	/**
+	 * @public
 	 * @type {Options}
 	 */
 	redaxios.defaults = defaults;

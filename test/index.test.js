@@ -306,8 +306,10 @@ describe('redaxios', () => {
 			cancel();
 
 			const spy = jasmine.createSpy();
-			await axiosGet.catch(spy);
+			let error;
+			await axiosGet.catch((e) => ((error = e), spy(e)));
 
+			expect(axios.isCancel(error)).toBeTruthy(true);
 			expect(spy).toHaveBeenCalledTimes(1);
 			expect(spy).toHaveBeenCalledWith(
 				jasmine.objectContaining({ code: 20, message: 'The user aborted a request.', name: 'AbortError' })
