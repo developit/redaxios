@@ -178,7 +178,10 @@ export default (function create(/** @type {Options} */ defaults) {
 		}
 
 		if (options.baseURL) {
-			url = new URL(url, options.baseURL) + '';
+			const _ = options.baseURL,
+				isAbsURL = ~_.indexOf('://');
+
+			url = (new URL(url, isAbsURL ? _ : 'http:' + _) + '').slice(isAbsURL ? 0 : 6);
 		}
 
 		if (options.params) {
