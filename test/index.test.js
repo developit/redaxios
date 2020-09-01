@@ -232,13 +232,63 @@ describe('redaxios', () => {
 		expect(res.data).toEqual({ hello: 'world' });
 	});
 
+	it('pre-request interceptor', async () => {
+    // @TODO: adding global interceptors here leaks if tests fail
+		const preRequestInterceptor = axios.interceptors.request.use((config) => {
+			config.test = 'testValue';
+			return config;
+		});
+		const req = axios.get(jsonExample, {
+			responseType: 'json'
+		});
+		expect(req).toBeInstanceOf(Promise);
+		const res = await req;
+		expect(res).toBeInstanceOf(Object);
+		expect(res.config.test).toBe('testValue');
+
+		// eject the interceptor
+		axios.interceptors.request.eject(preRequestInterceptor);
+
+		const newReq = axios.get(jsonExample, {
+			responseType: 'json'
+		});
+		expect(newReq).toBeInstanceOf(Promise);
+		const newRes = await newReq;
+		expect(newRes).toBeInstanceOf(Object);
+		expect(newRes.config.test).toBe(undefined);
+	});
+
+	it('response interceptor', async () => {
+		const postResponseInterceptor = axios.interceptors.response.use((response) => {
+			response.data.hello = `${response.data.hello} from interceptor`;
+			return response;
+		});
+		const req = axios.get(jsonExample, {
+			responseType: 'json'
+		});
+		expect(req).toBeInstanceOf(Promise);
+		const res = await req;
+		expect(res).toBeInstanceOf(Object);
+		expect(res.data).toEqual({ hello: 'world from interceptor' });
+
+		// eject the interceptor
+		axios.interceptors.response.eject(postResponseInterceptor);
+
+		const newReq = axios.get(jsonExample, {
+			responseType: 'json'
+		});
+		expect(newReq).toBeInstanceOf(Promise);
+		const newRes = await newReq;
+		expect(newRes).toBeInstanceOf(Object);
+		expect(newRes.data).toEqual({ hello: 'world' });
+  });
+
 	describe('options.params & options.paramsSerializer', () => {
 		let oldFetch, fetchMock;
 		beforeEach(() => {
 			oldFetch = window.fetch;
 			fetchMock = window.fetch = jasmine.createSpy('fetch').and.returnValue(Promise.resolve());
 		});
-
 		afterEach(() => {
 			window.fetch = oldFetch;
 		});

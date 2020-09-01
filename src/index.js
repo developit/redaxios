@@ -11,6 +11,8 @@
  * limitations under the License.
  */
 
+import Interceptor from './interceptor';
+
 /**
  * @public
  * @typedef Options
@@ -110,6 +112,12 @@ export default (function create(/** @type {Options} */ defaults) {
 	// 3b smaller:
 	// redaxios.spread = (fn) => /** @type {any} */ (fn.apply.bind(fn, fn));
 
+	/** @public */
+	redaxios.interceptors = {
+		request: new Interceptor(),
+		response: new Interceptor()
+	};
+
 	/**
 	 * @private
 	 * @param {Record<string,any>} opts
@@ -151,15 +159,24 @@ export default (function create(/** @type {Options} */ defaults) {
 			url = config.url;
 		}
 
-		const response = /** @type {Response<any>} */ ({ config });
+		let response = /** @type {Response<any>} */ ({ config });
 
 		/** @type {Options} */
-		const options = deepMerge(defaults, config);
+		let options = deepMerge(defaults, config);
+
+		if (_data) options.data = _data;
+
+		redaxios.interceptors.request.handlers.map((handler) => {
+			if (handler) {
+				const resultConfig = handler.done(options);
+				options = deepMerge(options, resultConfig || {});
+			}
+		});
+
+		let data = options.data;
 
 		/** @type {Headers} */
 		const customHeaders = {};
-
-		let data = _data || options.data;
 
 		(options.transformRequest || []).map((f) => {
 			data = f(data, options.headers) || data;
@@ -202,21 +219,33 @@ export default (function create(/** @type {Options} */ defaults) {
 			}
 
 			const ok = options.validateStatus ? options.validateStatus(res.status) : res.ok;
-			if (!ok) return Promise.reject(response);
-
-			if (options.responseType == 'stream') {
-				response.data = res.body;
-				return response;
+			if (!ok) {
+				redaxios.interceptors.response.handlers.map((handler) => {
+					if (handler && handler.error) {
+						handler.error(res);
+					}
+				});
+				const error = Promise.reject(response);
+				redaxios.interceptors.request.handlers.map((handler) => {
+					if (handler && handler.error) {
+						handler.error(error);
+					}
+				});
+				return error;
 			}
 
 			return res[options.responseType || 'text']()
 				.then((data) => {
 					response.data = data;
-					// its okay if this fails: response.data will be the unparsed value:
-					response.data = JSON.parse(data);
+					try {
+						response.data = JSON.parse(data);
+          }
+					catch (e) {}
+					redaxios.interceptors.response.handlers.map((handler) => {
+						response = (handler && handler.done(response)) || response;
+					});
+					return response;
 				})
-				.catch(Object)
-				.then(() => response);
 		});
 	}
 
