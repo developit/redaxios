@@ -202,7 +202,6 @@ export default (function create(/** @type {Options} */ defaults) {
 			}
 
 			const ok = options.validateStatus ? options.validateStatus(res.status) : res.ok;
-			if (!ok) return Promise.reject(response);
 
 			if (options.responseType == 'stream') {
 				response.data = res.body;
@@ -216,7 +215,7 @@ export default (function create(/** @type {Options} */ defaults) {
 					response.data = JSON.parse(data);
 				})
 				.catch(Object)
-				.then(() => response);
+				.then(() => (ok ? response : Promise.reject(response)));
 		});
 	}
 
