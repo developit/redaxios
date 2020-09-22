@@ -170,7 +170,8 @@ export default (function create(/** @type {Options} */ defaults) {
 			customHeaders['content-type'] = 'application/json';
 		}
 
-		const m = typeof document !== 'undefined' && document.cookie.match(RegExp('(^|; )' + options.xsrfCookieName + '=([^;]*)'));
+		const m =
+			typeof document !== 'undefined' && document.cookie.match(RegExp('(^|; )' + options.xsrfCookieName + '=([^;]*)'));
 		if (m) customHeaders[options.xsrfHeaderName] = m[2];
 
 		if (options.auth) {
