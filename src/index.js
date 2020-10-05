@@ -195,7 +195,7 @@ export default (function create(/** @type {Options} */ defaults) {
 			method: _method || options.method,
 			body: data,
 			headers: deepMerge(options.headers, customHeaders, true),
-			credentials: options.withCredentials ? 'include' : undefined
+			credentials: options.withCredentials ? 'include' : 'same-origin'
 		}).then((res) => {
 			for (const i in res) {
 				if (typeof res[i] != 'function') response[i] = res[i];
