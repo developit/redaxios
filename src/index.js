@@ -179,7 +179,7 @@ export default (function create(/** @type {Options} */ defaults) {
 		}
 
 		if (options.baseURL) {
-			url = new URL(url, options.baseURL) + '';
+			url = url.replace(/^(?!.*\/\/)\/?(.*)$/, options.baseURL + '/$1');
 		}
 
 		if (options.params) {
