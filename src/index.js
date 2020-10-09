@@ -94,7 +94,7 @@ export default (function create(/** @type {Options} */ defaults) {
 	redaxios.patch = (url, data, config) => redaxios(url, config, 'patch', data);
 
 	/** @public */
-	redaxios.all = Promise.all;
+	redaxios.all = Promise.all.bind(Promise);
 
 	/**
 	 * @public
