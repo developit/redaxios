@@ -105,13 +105,13 @@ export default (function create(/** @type {Options} */ defaults) {
 	redaxios.patch = (url, data, config) => redaxios(url, config, 'patch', data);
 
 	/** @public */
-	redaxios.all = Promise.all;
+	redaxios.all = Promise.all.bind(Promise);
 
 	/**
 	 * @public
-	 * @template T,R
-	 * @param {(...args: T[]) => R} fn
-	 * @returns {(array: T[]) => R}
+	 * @template Args, R
+	 * @param {(...args: Args[]) => R} fn
+	 * @returns {(array: Args[]) => R}
 	 */
 	redaxios.spread = function (fn) {
 		return function (results) {
@@ -213,7 +213,8 @@ export default (function create(/** @type {Options} */ defaults) {
 			customHeaders['content-type'] = 'application/json';
 		}
 
-		const m = document.cookie.match(RegExp('(^|; )' + options.xsrfCookieName + '=([^;]*)'));
+		const m =
+			typeof document !== 'undefined' && document.cookie.match(RegExp('(^|; )' + options.xsrfCookieName + '=([^;]*)'));
 		if (m) customHeaders[options.xsrfHeaderName] = m[2];
 
 		if (options.auth) {
@@ -221,7 +222,7 @@ export default (function create(/** @type {Options} */ defaults) {
 		}
 
 		if (options.baseURL) {
-			url = new URL(url, options.baseURL) + '';
+			url = url.replace(/^(?!.*\/\/)\/?(.*)$/, options.baseURL + '/$1');
 		}
 
 		if (options.params) {
@@ -238,7 +239,7 @@ export default (function create(/** @type {Options} */ defaults) {
 			method: _method || options.method,
 			body: data,
 			headers: deepMerge(options.headers, customHeaders, true),
-			credentials: options.withCredentials ? 'include' : undefined,
+			credentials: options.withCredentials ? 'include' : 'same-origin',
 			signal: options.cancelToken
 		}).then((res) => {
 			for (const i in res) {
@@ -246,7 +247,6 @@ export default (function create(/** @type {Options} */ defaults) {
 			}
 
 			const ok = options.validateStatus ? options.validateStatus(res.status) : res.ok;
-			if (!ok) return Promise.reject(response);
 
 			if (options.responseType == 'stream') {
 				response.data = res.body;
@@ -260,7 +260,7 @@ export default (function create(/** @type {Options} */ defaults) {
 					response.data = JSON.parse(data);
 				})
 				.catch(Object)
-				.then(() => response);
+				.then(() => (ok ? response : Promise.reject(response)));
 		});
 	}
 
