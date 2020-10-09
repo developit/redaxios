@@ -98,9 +98,9 @@ export default (function create(/** @type {Options} */ defaults) {
 
 	/**
 	 * @public
-	 * @template T,R
-	 * @param {(...args: T[]) => R} fn
-	 * @returns {(array: T[]) => R}
+	 * @template Args, R
+	 * @param {(...args: Args[]) => R} fn
+	 * @returns {(array: Args[]) => R}
 	 */
 	redaxios.spread = function (fn) {
 		return function (results) {
