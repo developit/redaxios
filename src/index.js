@@ -179,10 +179,7 @@ export default (function create(/** @type {Options} */ defaults) {
 		}
 
 		if (options.baseURL) {
-			const _ = options.baseURL,
-				isAbsURL = ~_.indexOf('://');
-
-			url = (new URL(url, isAbsURL ? _ : 'http:' + _) + '').slice(isAbsURL ? 0 : 6);
+			url = new URL(url, new URL(options.baseURL, location)) + '';
 		}
 
 		if (options.params) {
