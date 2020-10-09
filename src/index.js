@@ -179,6 +179,7 @@ export default (function create(/** @type {Options} */ defaults) {
 		}
 
 		if (options.baseURL) {
+			// @ts-ignore-next
 			url = new URL(url, new URL(options.baseURL, location)) + '';
 		}
 
