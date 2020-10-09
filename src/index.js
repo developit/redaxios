@@ -94,13 +94,13 @@ export default (function create(/** @type {Options} */ defaults) {
 	redaxios.patch = (url, data, config) => redaxios(url, config, 'patch', data);
 
 	/** @public */
-	redaxios.all = Promise.all;
+	redaxios.all = Promise.all.bind(Promise);
 
 	/**
 	 * @public
-	 * @template T,R
-	 * @param {(...args: T[]) => R} fn
-	 * @returns {(array: T[]) => R}
+	 * @template Args, R
+	 * @param {(...args: Args[]) => R} fn
+	 * @returns {(array: Args[]) => R}
 	 */
 	redaxios.spread = function (fn) {
 		return function (results) {
@@ -170,7 +170,8 @@ export default (function create(/** @type {Options} */ defaults) {
 			customHeaders['content-type'] = 'application/json';
 		}
 
-		const m = document.cookie.match(RegExp('(^|; )' + options.xsrfCookieName + '=([^;]*)'));
+		const m =
+			typeof document !== 'undefined' && document.cookie.match(RegExp('(^|; )' + options.xsrfCookieName + '=([^;]*)'));
 		if (m) customHeaders[options.xsrfHeaderName] = m[2];
 
 		if (options.auth) {
@@ -178,7 +179,7 @@ export default (function create(/** @type {Options} */ defaults) {
 		}
 
 		if (options.baseURL) {
-			url = new URL(url, options.baseURL) + '';
+			url = url.replace(/^(?!.*\/\/)\/?(.*)$/, options.baseURL + '/$1');
 		}
 
 		if (options.params) {
