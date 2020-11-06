@@ -82,6 +82,9 @@ export default (function create(/** @type {Options} */ defaults) {
 	redaxios.delete = (url, config) => redaxios(url, config, 'delete');
 
 	/** @public @type {BodylessMethod} */
+	redaxios.head = (url, config) => redaxios(url, config, 'head');
+
+	/** @public @type {BodylessMethod} */
 	redaxios.options = (url, config) => redaxios(url, config, 'options');
 
 	/** @public @type {BodyMethod} */
