@@ -10,7 +10,7 @@
   "scripts": {
     "build": "microbundle && tsc",
     "test": "npm run format:check && eslint src test && karmatic",
-    "release": "npm t && git commit -am \"$npm_package_version\" && git tag $npm_package_version && git push && git push --tags && npm publish",
+    "release": "npm run build && npm t && git commit -am \"$npm_package_version\" && git tag $npm_package_version && git push && git push --tags && npm publish",
     "format": "prettier --write './**/*.{js,json,yml,md}'",
     "format:check": "prettier --check './**/*.{js,json,yml,md}'"
   },
