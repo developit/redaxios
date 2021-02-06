@@ -30,7 +30,7 @@
  * @property {string} [baseURL] a base URL from which to resolve all URLs
  * @property {typeof window.fetch} [fetch] Custom window.fetch implementation
  * @property {any} [data]
- * @property {'cors'|'same-origin'|'navigate'|'no-cors'|undefined} [mode] The mode of the request (e.g., cors, no-cors, same-origin, or navigate.). Defaults to cors.
+ * @property {RequestMode} [mode] The mode of the request (e.g., cors, no-cors, same-origin, or navigate.). Defaults to cors.
  */
 
 /**
