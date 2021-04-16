@@ -76,25 +76,25 @@ export default (function create(/** @type {Options} */ defaults) {
 	redaxios.request = redaxios;
 
 	/** @public @type {BodylessMethod} */
-	redaxios.get = (url, config) => redaxios(url, config, 'get');
+	redaxios.get = (url, config) => redaxios(url, config, 'GET');
 
 	/** @public @type {BodylessMethod} */
-	redaxios.delete = (url, config) => redaxios(url, config, 'delete');
+	redaxios.delete = (url, config) => redaxios(url, config, 'DELETE');
 
 	/** @public @type {BodylessMethod} */
-	redaxios.head = (url, config) => redaxios(url, config, 'head');
+	redaxios.head = (url, config) => redaxios(url, config, 'HEAD');
 
 	/** @public @type {BodylessMethod} */
-	redaxios.options = (url, config) => redaxios(url, config, 'options');
+	redaxios.options = (url, config) => redaxios(url, config, 'OPTIONS');
 
 	/** @public @type {BodyMethod} */
-	redaxios.post = (url, data, config) => redaxios(url, config, 'post', data);
+	redaxios.post = (url, data, config) => redaxios(url, config, 'POST', data);
 
 	/** @public @type {BodyMethod} */
-	redaxios.put = (url, data, config) => redaxios(url, config, 'put', data);
+	redaxios.put = (url, data, config) => redaxios(url, config, 'POST', data);
 
 	/** @public @type {BodyMethod} */
-	redaxios.patch = (url, data, config) => redaxios(url, config, 'patch', data);
+	redaxios.patch = (url, data, config) => redaxios(url, config, 'PATCH', data);
 
 	/** @public */
 	redaxios.all = Promise.all.bind(Promise);

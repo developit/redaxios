@@ -87,7 +87,7 @@ describe('redaxios', () => {
 				expect(window.fetch).toHaveBeenCalledWith(
 					'http://foo/bar',
 					jasmine.objectContaining({
-						method: 'get',
+						method: 'GET',
 						headers: {},
 						body: undefined
 					})
@@ -112,7 +112,7 @@ describe('redaxios', () => {
 				expect(window.fetch).toHaveBeenCalledWith(
 					'/foo/bar',
 					jasmine.objectContaining({
-						method: 'get',
+						method: 'GET',
 						headers: {},
 						body: undefined
 					})
@@ -203,7 +203,25 @@ describe('redaxios', () => {
 			expect(fetchMock).toHaveBeenCalledWith(
 				'/foo',
 				jasmine.objectContaining({
-					method: 'post',
+					method: 'POST',
+					headers: {
+						'content-type': 'application/json'
+					},
+					body: '{"hello":"world"}'
+				})
+			);
+			expect(res.status).toEqual(200);
+			expect(res.data).toEqual('yep');
+		});
+
+		it('should issue PATCH requests (with JSON body)', async () => {
+			const res = await axios.patch('/foo', {
+				hello: 'world'
+			});
+			expect(fetchMock).toHaveBeenCalledWith(
+				'/foo',
+				jasmine.objectContaining({
+					method: 'PATCH',
 					headers: {
 						'content-type': 'application/json'
 					},
@@ -235,7 +253,7 @@ describe('redaxios', () => {
 				expect(fetchMock).toHaveBeenCalledWith(
 					'/foo',
 					jasmine.objectContaining({
-						method: 'post',
+						method: 'POST',
 						headers: {
 							'content-type': 'multipart/form-data'
 						},
