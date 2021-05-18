@@ -64,8 +64,12 @@
  * @type {<T=any>(url: string, body?: any, config?: Options) => Promise<Response<T>>}
  */
 
-/** */
-export default (function create(/** @type {Options} */ defaults) {
+/**
+ * @public
+ * @param {Options} defaults
+ * @returns {redaxios}
+ */
+function create(defaults) {
 	defaults = defaults || {};
 
 	/**
@@ -241,4 +245,7 @@ export default (function create(/** @type {Options} */ defaults) {
 	redaxios.create = create;
 
 	return redaxios;
-})();
+};
+
+// @ts-ignore TS2554
+export default create();
