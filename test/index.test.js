@@ -87,7 +87,7 @@ describe('redaxios', () => {
 				expect(window.fetch).toHaveBeenCalledWith(
 					'http://foo/bar',
 					jasmine.objectContaining({
-						method: 'get',
+						method: 'GET',
 						headers: {},
 						body: undefined
 					})
@@ -112,7 +112,7 @@ describe('redaxios', () => {
 				expect(window.fetch).toHaveBeenCalledWith(
 					'/foo/bar',
 					jasmine.objectContaining({
-						method: 'get',
+						method: 'GET',
 						headers: {},
 						body: undefined
 					})
@@ -203,7 +203,7 @@ describe('redaxios', () => {
 			expect(fetchMock).toHaveBeenCalledWith(
 				'/foo',
 				jasmine.objectContaining({
-					method: 'post',
+					method: 'POST',
 					headers: {
 						'content-type': 'application/json'
 					},
@@ -235,7 +235,7 @@ describe('redaxios', () => {
 				expect(fetchMock).toHaveBeenCalledWith(
 					'/foo',
 					jasmine.objectContaining({
-						method: 'post',
+						method: 'POST',
 						headers: {
 							'content-type': 'multipart/form-data'
 						},
