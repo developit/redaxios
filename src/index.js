@@ -76,25 +76,25 @@ export default (function create(/** @type {Options} */ defaults) {
 	redaxios.request = redaxios;
 
 	/** @public @type {BodylessMethod} */
-	redaxios.get = (url, config) => redaxios(url, config, 'GET');
+	redaxios.get = (url, config) => redaxios(url, config, 'get');
 
 	/** @public @type {BodylessMethod} */
-	redaxios.delete = (url, config) => redaxios(url, config, 'DELETE');
+	redaxios.delete = (url, config) => redaxios(url, config, 'delete');
 
 	/** @public @type {BodylessMethod} */
-	redaxios.head = (url, config) => redaxios(url, config, 'HEAD');
+	redaxios.head = (url, config) => redaxios(url, config, 'head');
 
 	/** @public @type {BodylessMethod} */
-	redaxios.options = (url, config) => redaxios(url, config, 'OPTIONS');
+	redaxios.options = (url, config) => redaxios(url, config, 'options');
 
 	/** @public @type {BodyMethod} */
-	redaxios.post = (url, data, config) => redaxios(url, config, 'POST', data);
+	redaxios.post = (url, data, config) => redaxios(url, config, 'post', data);
 
 	/** @public @type {BodyMethod} */
-	redaxios.put = (url, data, config) => redaxios(url, config, 'POST', data);
+	redaxios.put = (url, data, config) => redaxios(url, config, 'put', data);
 
 	/** @public @type {BodyMethod} */
-	redaxios.patch = (url, data, config) => redaxios(url, config, 'PATCH', data);
+	redaxios.patch = (url, data, config) => redaxios(url, config, 'patch', data);
 
 	/** @public */
 	redaxios.all = Promise.all.bind(Promise);
@@ -175,7 +175,7 @@ export default (function create(/** @type {Options} */ defaults) {
 
 		const m =
 			typeof document !== 'undefined' && document.cookie.match(RegExp('(^|; )' + options.xsrfCookieName + '=([^;]*)'));
-		if (m) customHeaders[options.xsrfHeaderName] = m[2];
+		if (m) customHeaders[options.xsrfHeaderName] = decodeURIComponent(m[2]);
 
 		if (options.auth) {
 			customHeaders.authorization = options.auth;
@@ -196,7 +196,7 @@ export default (function create(/** @type {Options} */ defaults) {
 		const fetchFunc = options.fetch || fetch;
 
 		return fetchFunc(url, {
-			method: _method || options.method,
+			method: (_method || options.method).toUpperCase(),
 			body: data,
 			headers: deepMerge(options.headers, customHeaders, true),
 			credentials: options.withCredentials ? 'include' : 'same-origin'
