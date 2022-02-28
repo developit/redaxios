@@ -179,7 +179,7 @@ function create(defaults) {
 
 		const m =
 			typeof document !== 'undefined' && document.cookie.match(RegExp('(^|; )' + options.xsrfCookieName + '=([^;]*)'));
-		if (m) customHeaders[options.xsrfHeaderName] = m[2];
+		if (m) customHeaders[options.xsrfHeaderName] = decodeURIComponent(m[2]);
 
 		if (options.auth) {
 			customHeaders.authorization = options.auth;
