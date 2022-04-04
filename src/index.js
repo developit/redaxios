@@ -16,7 +16,7 @@
  * @typedef Options
  * @property {string} [url] the URL to request
  * @property {'get'|'post'|'put'|'patch'|'delete'|'options'|'head'|'GET'|'POST'|'PUT'|'PATCH'|'DELETE'|'OPTIONS'|'HEAD'} [method="get"] HTTP method, case-insensitive
- * @property {Headers} [headers] Request headers
+ * @property {RequestHeaders} [headers] Request headers
  * @property {FormData|string|object} [body] a body, optionally encoded, to send
  * @property {'text'|'json'|'stream'|'blob'|'arrayBuffer'|'formData'|'stream'} [responseType="json"] An encoding to use for the response
  * @property {Record<string,any>|URLSearchParams} [params] querystring parameters
@@ -26,7 +26,7 @@
  * @property {string} [xsrfCookieName] Pass an Cross-site Request Forgery prevention cookie value as a header defined by `xsrfHeaderName`
  * @property {string} [xsrfHeaderName] The name of a header to use for passing XSRF cookies
  * @property {(status: number) => boolean} [validateStatus] Override status code handling (default: 200-399 is a success)
- * @property {Array<(body: any, headers: Headers) => any?>} [transformRequest] An array of transformations to apply to the outgoing request
+ * @property {Array<(body: any, headers: RequestHeaders) => any?>} [transformRequest] An array of transformations to apply to the outgoing request
  * @property {string} [baseURL] a base URL from which to resolve all URLs
  * @property {typeof window.fetch} [fetch] Custom window.fetch implementation
  * @property {any} [data]
@@ -34,7 +34,7 @@
 
 /**
  * @public
- * @typedef Headers
+ * @typedef RequestHeaders
  * @type {{[name: string]: string}}
  */
 
@@ -159,7 +159,7 @@ export default (function create(/** @type {Options} */ defaults) {
 		/** @type {Options} */
 		const options = deepMerge(defaults, config);
 
-		/** @type {Headers} */
+		/** @type {RequestHeaders} */
 		const customHeaders = {};
 
 		let data = _data || options.data;
