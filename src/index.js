@@ -168,7 +168,7 @@ export default (function create(/** @type {Options} */ defaults) {
 			data = f(data, options.headers) || data;
 		});
 
-		if (data && typeof data === 'object' && /^\[object (FormData|Blob)\]$/.test(data)) {
+		if (data && typeof data === 'object' && !/^\[object (FormData|Blob)\]$/.test(data)) {
 			data = JSON.stringify(data);
 			customHeaders['content-type'] = 'application/json';
 		}
