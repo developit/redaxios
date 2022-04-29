@@ -64,8 +64,12 @@
  * @type {<T=any>(url: string, body?: any, config?: Options) => Promise<Response<T>>}
  */
 
-/** */
-export default (function create(/** @type {Options} */ defaults) {
+/**
+ * @public
+ * @param {Options} [defaults]
+ * @returns {redaxios}
+ */
+function create(defaults) {
 	defaults = defaults || {};
 
 	/**
@@ -168,7 +172,7 @@ export default (function create(/** @type {Options} */ defaults) {
 			data = f(data, options.headers) || data;
 		});
 
-		if (data && typeof data === 'object' && typeof data.append !== 'function') {
+		if (data && typeof data === 'object' && typeof data.append !== 'function' && typeof data.text !== 'function') {
 			data = JSON.stringify(data);
 			customHeaders['content-type'] = 'application/json';
 		}
@@ -196,7 +200,7 @@ export default (function create(/** @type {Options} */ defaults) {
 		const fetchFunc = options.fetch || fetch;
 
 		return fetchFunc(url, {
-			method: _method || options.method,
+			method: (_method || options.method || 'get').toUpperCase(),
 			body: data,
 			headers: deepMerge(options.headers, customHeaders, true),
 			credentials: options.withCredentials ? 'include' : 'same-origin'
@@ -241,4 +245,6 @@ export default (function create(/** @type {Options} */ defaults) {
 	redaxios.create = create;
 
 	return redaxios;
-})();
+}
+
+export default create();
