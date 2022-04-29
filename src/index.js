@@ -66,7 +66,7 @@
 
 /**
  * @public
- * @param {Options} defaults
+ * @param {Options} [defaults]
  * @returns {redaxios}
  */
 function create(defaults) {
@@ -245,7 +245,6 @@ function create(defaults) {
 	redaxios.create = create;
 
 	return redaxios;
-};
+}
 
-// @ts-ignore TS2554
 export default create();
