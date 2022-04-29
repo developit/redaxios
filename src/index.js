@@ -167,6 +167,10 @@ function create(defaults) {
 			data = f(data, options.headers) || data;
 		});
 
+		if (options.auth) {
+			customHeaders.authorization = options.auth;
+		}
+
 		if (data && typeof data === 'object' && typeof data.append !== 'function' && typeof data.text !== 'function') {
 			data = JSON.stringify(data);
 			customHeaders['content-type'] = 'application/json';
@@ -177,10 +181,6 @@ function create(defaults) {
 				document.cookie.match(RegExp('(^|; )' + options.xsrfCookieName + '=([^;]*)'))[2]
 			);
 		} catch (e) {}
-
-		if (options.auth) {
-			customHeaders.authorization = options.auth;
-		}
 
 		if (options.baseURL) {
 			url = url.replace(/^(?!.*\/\/)\/?/, options.baseURL + '/');
