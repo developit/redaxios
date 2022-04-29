@@ -171,9 +171,11 @@ function create(defaults) {
 			customHeaders['content-type'] = 'application/json';
 		}
 
-		const m =
-			typeof document !== 'undefined' && document.cookie.match(RegExp('(^|; )' + options.xsrfCookieName + '=([^;]*)'));
-		if (m) customHeaders[options.xsrfHeaderName] = decodeURIComponent(m[2]);
+		try {
+			customHeaders[options.xsrfHeaderName] = decodeURIComponent(
+				document.cookie.match(RegExp('(^|; )' + options.xsrfCookieName + '=([^;]*)'))[2]
+			);
+		} catch (e) {}
 
 		if (options.auth) {
 			customHeaders.authorization = options.auth;
