@@ -182,7 +182,7 @@ function create(defaults) {
 		}
 
 		if (options.baseURL) {
-			url = url.replace(/^(?!.*\/\/)\/?(.*)$/, options.baseURL + '/$1');
+			url = url.replace(/^(?!.*\/\/)\/?/, options.baseURL + '/');
 		}
 
 		if (options.params) {
