@@ -142,11 +142,12 @@ function create(defaults) {
 	 * @template T
 	 * @param {string | Options} url
 	 * @param {Options} [config]
-	 * @param {any} [_method]
-	 * @param {any} [_data]
+	 * @param {any} [_method] (internal)
+	 * @param {any} [data] (internal)
+	 * @param {never} [_undefined] (internal)
 	 * @returns {Promise<Response<T>>}
 	 */
-	function redaxios(url, config, _method, _data) {
+	function redaxios(url, config, _method, data, _undefined) {
 		if (typeof url !== 'string') {
 			config = url;
 			url = config.url;
@@ -160,7 +161,7 @@ function create(defaults) {
 		/** @type {RequestHeaders} */
 		const customHeaders = {};
 
-		let data = _data || options.data;
+		data = data || options.data;
 
 		(options.transformRequest || []).map((f) => {
 			data = f(data, options.headers) || data;
@@ -199,13 +200,11 @@ function create(defaults) {
 			method: (_method || options.method || 'get').toUpperCase(),
 			body: data,
 			headers: deepMerge(options.headers, customHeaders, true),
-			credentials: options.withCredentials ? 'include' : 'same-origin'
+			credentials: options.withCredentials ? 'include' : _undefined
 		}).then((res) => {
 			for (const i in res) {
 				if (typeof res[i] != 'function') response[i] = res[i];
 			}
-
-			const ok = options.validateStatus ? options.validateStatus(res.status) : res.ok;
 
 			if (options.responseType == 'stream') {
 				response.data = res.body;
@@ -219,7 +218,10 @@ function create(defaults) {
 					response.data = JSON.parse(data);
 				})
 				.catch(Object)
-				.then(() => (ok ? response : Promise.reject(response)));
+				.then(() => {
+					const ok = options.validateStatus ? options.validateStatus(res.status) : res.ok;
+					return ok ? response : Promise.reject(response);
+				});
 		});
 	}
 
