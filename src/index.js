@@ -66,7 +66,7 @@
 
 /**
  * @public
- * @param {Options} [defaults]
+ * @param {Options} [defaults = {}]
  * @returns {redaxios}
  */
 function create(defaults) {
@@ -113,15 +113,17 @@ function create(defaults) {
 
 	/**
 	 * @private
-	 * @param {Record<string,any>} opts
-	 * @param {Record<string,any>} [overrides]
+	 * @template T, U
+	 * @param {T} opts
+	 * @param {U} [overrides]
 	 * @param {boolean} [lowerCase]
-	 * @returns {Partial<opts>}
+	 * @returns {{} & (T | U)}
 	 */
 	function deepMerge(opts, overrides, lowerCase) {
-		let out = {},
+		let out = /** @type {any} */ ({}),
 			i;
 		if (Array.isArray(opts)) {
+			// @ts-ignore
 			return opts.concat(overrides);
 		}
 		for (i in opts) {
@@ -140,18 +142,15 @@ function create(defaults) {
 	 * Issues a request.
 	 * @public
 	 * @template T
-	 * @param {string | Options} url
-	 * @param {Options} [config]
+	 * @param {string | Options} urlOrConfig
+	 * @param {Options} [config = {}]
 	 * @param {any} [_method] (internal)
 	 * @param {any} [data] (internal)
 	 * @param {never} [_undefined] (internal)
 	 * @returns {Promise<Response<T>>}
 	 */
-	function redaxios(url, config, _method, data, _undefined) {
-		if (typeof url !== 'string') {
-			config = url;
-			url = config.url;
-		}
+	function redaxios(urlOrConfig, config, _method, data, _undefined) {
+		let url = /** @type {string} */ (typeof urlOrConfig != 'string' ? (config = urlOrConfig).url : urlOrConfig);
 
 		const response = /** @type {Response<any>} */ ({ config });
 
@@ -177,7 +176,9 @@ function create(defaults) {
 		}
 
 		try {
+			// @ts-ignore providing the cookie name without header name is nonsensical anyway
 			customHeaders[options.xsrfHeaderName] = decodeURIComponent(
+				// @ts-ignore accessing match()[2] throws for no match, which is intentional
 				document.cookie.match(RegExp('(^|; )' + options.xsrfCookieName + '=([^;]*)'))[2]
 			);
 		} catch (e) {}
