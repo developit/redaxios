@@ -131,7 +131,7 @@ function create(defaults) {
 		for (i in overrides) {
 			const key = lowerCase ? i.toLowerCase() : i;
 			const value = /** @type {any} */ (overrides)[i];
-			out[key] = key in out && typeof value == 'object' ? deepMerge(out[key], value, key === 'headers') : value;
+			out[key] = key in out && typeof value == 'object' ? deepMerge(out[key], value, key == 'headers') : value;
 		}
 		return out;
 	}
