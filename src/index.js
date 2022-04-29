@@ -109,13 +109,7 @@ function create(defaults) {
 	 * @param {(...args: Args[]) => R} fn
 	 * @returns {(array: Args[]) => R}
 	 */
-	redaxios.spread = function (fn) {
-		return function (results) {
-			return fn.apply(this, results);
-		};
-	};
-	// 3b smaller:
-	// redaxios.spread = (fn) => /** @type {any} */ (fn.apply.bind(fn, fn));
+	redaxios.spread = (fn) => /** @type {any} */ (fn.apply.bind(fn, fn));
 
 	/**
 	 * @private
