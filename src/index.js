@@ -171,14 +171,11 @@ function create(defaults) {
 			customHeaders['content-type'] = 'application/json';
 		}
 
-		let m;
-
 		try {
-			m =
-				typeof document !== 'undefined' &&
-				document.cookie.match(RegExp('(^|; )' + options.xsrfCookieName + '=([^;]*)'));
+			customHeaders[options.xsrfHeaderName] = decodeURIComponent(
+				document.cookie.match(RegExp('(^|; )' + options.xsrfCookieName + '=([^;]*)'))[2]
+			);
 		} catch (e) {}
-		if (m) customHeaders[options.xsrfHeaderName] = decodeURIComponent(m[2]);
 
 		if (options.auth) {
 			customHeaders.authorization = options.auth;
