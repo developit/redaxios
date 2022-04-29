@@ -30,6 +30,7 @@
  * @property {string} [baseURL] a base URL from which to resolve all URLs
  * @property {typeof window.fetch} [fetch] Custom window.fetch implementation
  * @property {any} [data]
+ * @property {RequestMode} [mode] The mode of the request (e.g., cors, no-cors, same-origin, or navigate.). Defaults to cors.
  */
 
 /**
@@ -199,7 +200,8 @@ function create(defaults) {
 			method: (_method || options.method || 'get').toUpperCase(),
 			body: data,
 			headers: deepMerge(options.headers, customHeaders, true),
-			credentials: options.withCredentials ? 'include' : 'same-origin'
+			credentials: options.withCredentials ? 'include' : 'same-origin',
+			mode: options.mode
 		}).then((res) => {
 			for (const i in res) {
 				if (typeof res[i] != 'function') response[i] = res[i];
