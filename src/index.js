@@ -187,11 +187,9 @@ function create(defaults) {
 		}
 
 		if (options.params) {
-			const divider = ~url.indexOf('?') ? '&' : '?';
-			const query = options.paramsSerializer
-				? options.paramsSerializer(options.params)
-				: new URLSearchParams(options.params);
-			url += divider + query;
+			url +=
+				(~url.indexOf('?') ? '&' : '?') +
+				(options.paramsSerializer ? options.paramsSerializer(options.params) : new URLSearchParams(options.params));
 		}
 
 		const fetchFunc = options.fetch || fetch;
