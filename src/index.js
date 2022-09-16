@@ -219,7 +219,7 @@ function create(defaults) {
 				.catch(Object)
 				.then(() => {
 					const ok = options.validateStatus ? options.validateStatus(res.status) : res.ok;
-					return ok ? response : Promise.reject(response);
+					return ok ? response : Promise.reject({ response });
 				});
 		});
 	}
