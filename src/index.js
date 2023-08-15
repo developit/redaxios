@@ -30,6 +30,7 @@
  * @property {string} [baseURL] a base URL from which to resolve all URLs
  * @property {typeof window.fetch} [fetch] Custom window.fetch implementation
  * @property {any} [data]
+ * @property {AbortSignal} [signal]
  */
 
 /**
@@ -70,178 +71,173 @@
  * @returns {redaxios}
  */
 function create(defaults) {
-	defaults = defaults || {};
+    defaults = defaults || {};
 
-	/**
-	 * @public
-	 * @template T
-	 * @type {(<T = any>(config?: Options) => Promise<Response<T>>) | (<T = any>(url: string, config?: Options) => Promise<Response<T>>)}
-	 */
-	redaxios.request = redaxios;
+    /**
+     * @public
+     * @template T
+     * @type {(<T = any>(config?: Options) => Promise<Response<T>>) | (<T = any>(url: string, config?: Options) => Promise<Response<T>>)}
+     */
+    redaxios.request = redaxios;
 
-	/** @public @type {BodylessMethod} */
-	redaxios.get = (url, config) => redaxios(url, config, 'get');
+    /** @public @type {BodylessMethod} */
+    redaxios.get = (url, config) => redaxios(url, config, 'get');
 
-	/** @public @type {BodylessMethod} */
-	redaxios.delete = (url, config) => redaxios(url, config, 'delete');
+    /** @public @type {BodylessMethod} */
+    redaxios.delete = (url, config) => redaxios(url, config, 'delete');
 
-	/** @public @type {BodylessMethod} */
-	redaxios.head = (url, config) => redaxios(url, config, 'head');
+    /** @public @type {BodylessMethod} */
+    redaxios.head = (url, config) => redaxios(url, config, 'head');
 
-	/** @public @type {BodylessMethod} */
-	redaxios.options = (url, config) => redaxios(url, config, 'options');
+    /** @public @type {BodylessMethod} */
+    redaxios.options = (url, config) => redaxios(url, config, 'options');
 
-	/** @public @type {BodyMethod} */
-	redaxios.post = (url, data, config) => redaxios(url, config, 'post', data);
+    /** @public @type {BodyMethod} */
+    redaxios.post = (url, data, config) => redaxios(url, config, 'post', data);
 
-	/** @public @type {BodyMethod} */
-	redaxios.put = (url, data, config) => redaxios(url, config, 'put', data);
+    /** @public @type {BodyMethod} */
+    redaxios.put = (url, data, config) => redaxios(url, config, 'put', data);
 
-	/** @public @type {BodyMethod} */
-	redaxios.patch = (url, data, config) => redaxios(url, config, 'patch', data);
+    /** @public @type {BodyMethod} */
+    redaxios.patch = (url, data, config) => redaxios(url, config, 'patch', data);
 
-	/** @public */
-	redaxios.all = Promise.all.bind(Promise);
+    /** @public */
+    redaxios.all = Promise.all.bind(Promise);
 
-	/**
-	 * @public
-	 * @template Args, R
-	 * @param {(...args: Args[]) => R} fn
-	 * @returns {(array: Args[]) => R}
-	 */
-	redaxios.spread = (fn) => /** @type {any} */ (fn.apply.bind(fn, fn));
+    /**
+     * @public
+     * @template Args, R
+     * @param {(...args: Args[]) => R} fn
+     * @returns {(array: Args[]) => R}
+     */
+    redaxios.spread = (fn) => /** @type {any} */ (fn.apply.bind(fn, fn));
 
-	/**
-	 * @private
-	 * @template T, U
-	 * @param {T} opts
-	 * @param {U} [overrides]
-	 * @param {boolean} [lowerCase]
-	 * @returns {{} & (T | U)}
-	 */
-	function deepMerge(opts, overrides, lowerCase) {
-		let out = /** @type {any} */ ({}),
-			i;
-		if (Array.isArray(opts)) {
-			// @ts-ignore
-			return opts.concat(overrides);
-		}
-		for (i in opts) {
-			const key = lowerCase ? i.toLowerCase() : i;
-			out[key] = opts[i];
-		}
-		for (i in overrides) {
-			const key = lowerCase ? i.toLowerCase() : i;
-			const value = /** @type {any} */ (overrides)[i];
-			out[key] = key in out && typeof value == 'object' ? deepMerge(out[key], value, key == 'headers') : value;
-		}
-		return out;
-	}
+    /**
+     * @private
+     * @template T, U
+     * @param {T} opts
+     * @param {U} [overrides]
+     * @param {boolean} [lowerCase]
+     * @returns {{} & (T | U)}
+     */
+    function deepMerge(opts, overrides, lowerCase) {
+        let out = /** @type {any} */ ({}),
+            i;
+        if (Array.isArray(opts)) {
+            // @ts-ignore
+            return opts.concat(overrides);
+        }
+        for (i in opts) {
+            const key = lowerCase ? i.toLowerCase() : i;
+            out[key] = opts[i];
+        }
+        for (i in overrides) {
+            const key = lowerCase ? i.toLowerCase() : i;
+            const value = /** @type {any} */ (overrides)[i];
+            out[key] = key in out && typeof value == 'object' ? deepMerge(out[key], value, key === 'headers') : value;
+        }
+        return out;
+    }
 
-	/**
-	 * Issues a request.
-	 * @public
-	 * @template T
-	 * @param {string | Options} urlOrConfig
-	 * @param {Options} [config = {}]
-	 * @param {any} [_method] (internal)
-	 * @param {any} [data] (internal)
-	 * @param {never} [_undefined] (internal)
-	 * @returns {Promise<Response<T>>}
-	 */
-	function redaxios(urlOrConfig, config, _method, data, _undefined) {
-		let url = /** @type {string} */ (typeof urlOrConfig != 'string' ? (config = urlOrConfig).url : urlOrConfig);
+    /**
+     * Issues a request.
+     * @public
+     * @template T
+     * @param {string | Options} urlOrConfig
+     * @param {Options} [config = {}]
+     * @param {any} [_method] (internal)
+     * @param {any} [data] (internal)
+     * @param {never} [_undefined] (internal)
+     * @returns {Promise<Response<T>>}
+     */
+    function redaxios(urlOrConfig, config, _method, data, _undefined) {
+        let url = /** @type {string} */ (typeof urlOrConfig != 'string' ? (config = urlOrConfig).url : urlOrConfig);
 
-		const response = /** @type {Response<any>} */ ({ config });
+        const response = /** @type {Response<any>} */ ({ config });
 
-		/** @type {Options} */
-		const options = deepMerge(defaults, config);
+        /** @type {Options} */
+        const options = deepMerge(defaults, config);
 
-		/** @type {RequestHeaders} */
-		const customHeaders = {};
+        /** @type {RequestHeaders} */
+        const customHeaders = {};
 
-		data = data || options.data;
+        data = data || options.data;
 
-		(options.transformRequest || []).map((f) => {
-			data = f(data, options.headers) || data;
-		});
+        (options.transformRequest || []).map((f) => {
+            data = f(data, options.headers) || data;
+        });
 
-		if (options.auth) {
-			customHeaders.authorization = options.auth;
-		}
+        if (options.auth) {
+            customHeaders.authorization = options.auth;
+        }
 
-		if (data && typeof data === 'object' && typeof data.append !== 'function' && typeof data.text !== 'function') {
-			data = JSON.stringify(data);
-			customHeaders['content-type'] = 'application/json';
-		}
+        if (data && typeof data === 'object' && typeof data.append !== 'function' && typeof data.text !== 'function') {
+            data = JSON.stringify(data);
+            customHeaders['content-type'] = 'application/json';
+        }
 
-		try {
-			// @ts-ignore providing the cookie name without header name is nonsensical anyway
-			customHeaders[options.xsrfHeaderName] = decodeURIComponent(
-				// @ts-ignore accessing match()[2] throws for no match, which is intentional
-				document.cookie.match(RegExp('(^|; )' + options.xsrfCookieName + '=([^;]*)'))[2]
-			);
-		} catch (e) {}
+        try {
+            // @ts-ignore providing the cookie name without header name is nonsensical anyway
+            customHeaders[options.xsrfHeaderName] = decodeURIComponent(
+                // @ts-ignore accessing match()[2] throws for no match, which is intentional
+                document.cookie.match(RegExp('(^|; )' + options.xsrfCookieName + '=([^;]*)'))[2]
+            );
+        } catch (e) {}
 
-		if (options.baseURL) {
-			url = url.replace(/^(?!.*\/\/)\/?/, options.baseURL + '/');
-		}
+        if (options.baseURL) {
+            url = url.replace(/^(?!.*\/\/)\/?/, options.baseURL + '/');
+        }
 
-		if (options.params) {
-			url +=
-				(~url.indexOf('?') ? '&' : '?') +
-				(options.paramsSerializer ? options.paramsSerializer(options.params) : new URLSearchParams(options.params));
-		}
+        if (options.params) {
+            url +=
+                (~url.indexOf('?') ? '&' : '?') +
+                (options.paramsSerializer ? options.paramsSerializer(options.params) : new URLSearchParams(options.params));
+        }
 
-		const fetchFunc = options.fetch || fetch;
+        const fetchFunc = options.fetch || fetch;
 
-		return fetchFunc(url, {
-			method: (_method || options.method || 'get').toUpperCase(),
-			body: data,
-			headers: deepMerge(options.headers, customHeaders, true),
-			credentials: options.withCredentials ? 'include' : _undefined
-		}).then((res) => {
-			for (const i in res) {
-				if (typeof res[i] != 'function') response[i] = res[i];
-			}
+        return fetchFunc(url, {
+            method: (_method || options.method || 'get').toUpperCase(),
+            body: data,
+            headers: deepMerge(options.headers, customHeaders, true),
+            credentials: options.withCredentials ? 'include' : _undefined,
+            signal: options.signal ?? _undefined,
+        }).then((res) => {
+            for (const i in res) {
+                if (typeof res[i] !== 'function') response[i] = res[i];
+            }
 
-			if (options.responseType == 'stream') {
-				response.data = res.body;
-				return response;
-			}
+            if (options.responseType === 'stream') {
+                response.data = res.body;
+                return response;
+            }
 
-			return res[options.responseType || 'text']()
-				.then((data) => {
-					response.data = data;
-					// its okay if this fails: response.data will be the unparsed value:
-					response.data = JSON.parse(data);
-				})
-				.catch(Object)
-				.then(() => {
-					const ok = options.validateStatus ? options.validateStatus(res.status) : res.ok;
-					return ok ? response : Promise.reject(response);
-				});
-		});
-	}
+            return res[options.responseType || 'text']()
+                .then((data) => {
+                    response.data = data;
+                    // its okay if this fails: response.data will be the unparsed value:
+                    response.data = JSON.parse(data);
+                })
+                .catch(Object)
+                .then(() => {
+                    const ok = options.validateStatus ? options.validateStatus(res.status) : res.ok;
+                    return ok ? response : Promise.reject(response);
+                });
+        });
+    }
 
-	/**
-	 * @public
-	 * @type {AbortController}
-	 */
-	redaxios.CancelToken = /** @type {any} */ (typeof AbortController == 'function' ? AbortController : Object);
+    /**
+     * @public
+     * @type {Options}
+     */
+    redaxios.defaults = defaults;
 
-	/**
-	 * @public
-	 * @type {Options}
-	 */
-	redaxios.defaults = defaults;
+    /**
+     * @public
+     */
+    redaxios.create = create;
 
-	/**
-	 * @public
-	 */
-	redaxios.create = create;
-
-	return redaxios;
+    return redaxios;
 }
 
 export default create();
